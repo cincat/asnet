@@ -22,6 +22,10 @@ public:
     Stream* newStream();
     Stream* newStream(int fd);
 private:
+
+    void registerEvent(int);
+    void waitEvent(int, long);
+
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_;
     const static int kEventNum = 1000;

@@ -2,7 +2,7 @@
 #include <functional>
 
 #include <unistd.h>
-#include <time.h>
+#include <sys/time.h>
 
 namespace asnet {
 
@@ -31,10 +31,14 @@ public:
     //     last_activity_(::time(NULL)),
     //     callbacks_(kEventNum){}
     Stream(int fd): fd_(fd), state_(State::CLOSED),
-        last_activity_(::time(nullptr)),
+        // last_activity_(::time(nullptr)),
         callbacks_(kEventNum),
         write_index_(0) {}
-    Stream(): Stream(INVALID_SOCKET_FD) {}
+    Stream(): Stream(INVALID_SOCKET_FD) {
+        struct timeval cur_time;
+        ::gettimeofday(&cur_time, nullptr);
+        last_activity_ = cur_time.tv_sec * 1000 + cur_time.tv_usec / 1000;
+    }
 
     // fix me: close Stream
     ~Stream() {
@@ -59,6 +63,7 @@ public:
     friend bool streamComp(Stream *, Stream*);
     bool hasCallbackFor(Event ev) {return callbacks_[ev] == nullptr;}
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
+
 private:
 
     const static int kBufferLength = 1024;
@@ -66,8 +71,9 @@ private:
     std::vector<Callback> callbacks_;
     int fd_;
     State state_;
-    // long active_time_;
-    long int last_activity_, time_out_, tik_tok_;
+    // time unit is mcro second which is compatible with epoll
+    long long last_activity_;
+    int time_out_, tik_tok_;
     char write_buffer_[kBufferLength];
     char read_buffer_[kBufferLength];
     int write_index_;

@@ -10,11 +10,6 @@
 namespace asnet {
     bool streamComp(Stream *, Stream*);
     EventLoop::EventLoop(): streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)){
-        // efd_ = epoll_create(1);
-        // // fix me: add some log information
-        // if (efd_ < 0) {
-        //     return;
-        // }
     }
 
     void EventLoop::run() {
@@ -23,7 +18,6 @@ namespace asnet {
             stream = *streams_.begin();
         }
         if (stream == nullptr) return;
-
         long block_time = stream->getExpiredTime();
         int efd = ::epoll_create(1);
         // fix me
@@ -31,6 +25,15 @@ namespace asnet {
             return;
         }
 
+        while (true) {
+            registerEvent(efd);
+            waitEvent(efd, block_time);
+        }
+
+        
+    }
+
+    void EventLoop::registerEvent(int efd) {
         for (auto stream_ptr : stream_buffer_) {
             if (stream_ptr->getState() == Stream::State::CONNECTING) {
                 struct epoll_event event;
@@ -60,7 +63,9 @@ namespace asnet {
             streams_.insert(stream_ptr);
         }
         stream_buffer_.clear();
+    }
 
+    void EventLoop::waitEvent(int efd, long block_time) {
         struct epoll_event event_list[kEventNum];
         int nfds;
         nfds = epoll_wait(efd, event_list, kEventNum, block_time);
@@ -70,7 +75,7 @@ namespace asnet {
         }
 
         for (int i = 0; i < nfds; i++) {
-            stream = static_cast<Stream *>(event_list[i].data.ptr);
+            Stream *stream = static_cast<Stream *>(event_list[i].data.ptr);
             if (event_list[i].events & EPOLLIN) {
                 if (stream->getState() == Stream::State::LISTENNING) {
                     stream->setState(Stream::State::CONNECTED);
@@ -110,6 +115,7 @@ namespace asnet {
             }
         }
     }
+
     Stream* EventLoop::newStream(int fd) {
         Stream *stream = new Stream(fd);
         stream_buffer_.push_back(stream);
