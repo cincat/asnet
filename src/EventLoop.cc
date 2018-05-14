@@ -32,7 +32,30 @@ namespace asnet {
 
                 if (stream->getExpiredTimeAsMicroscends() > 0) break;
 
-                if (stream->getTimeout() > 0) {
+                if (stream->getTimeout() > 0 && stream->getTiktok() == 0) {
+                    if (stream->hasCallbackFor(Stream::Event::TIMEOUT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TIMEOUT);
+                        callback(stream);
+                    }
+                }
+                else if (stream->getTimeout() == 0 && stream->getTiktok() > 0) {
+                    if (stream->hasCallbackFor(Stream::Event::TICTOK)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TICTOK);
+                        // fix me: should adjust stream position in set(balance tree)
+                        stream->setLastactivityAsCurrent();
+                        callback(stream);
+                    }
+                }
+                else if (stream->getTiktok() < stream->getTimeout()) {
+                    if (stream->hasCallbackFor(Stream::Event::TICTOK)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TICTOK);
+                        // fix me:
+                        stream->setTimeout(stream->getTimeout() - (stream->getCurrentTimeAsMicroscends() - stream->getLastActivity()));
+                        stream->setLastactivityAsCurrent();
+                        callback(stream);
+                    }
+                }
+                else if (stream->getTimeout() < stream->getTiktok()) {
                     if (stream->hasCallbackFor(Stream::Event::TIMEOUT)) {
                         Stream::Callback callback = stream->getCallbackFor(Stream::Event::TIMEOUT);
                         callback(stream);
