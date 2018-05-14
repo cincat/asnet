@@ -25,10 +25,14 @@ public:
         TICTOK
     };
 
-    Stream(): state_(State::CLOSED),
-        last_activity_(::time(NULL)),
-        callbacks_(kEventNum){}
-    
+    // Stream(): state_(State::CLOSED),
+    //     last_activity_(::time(NULL)),
+    //     callbacks_(kEventNum){}
+    Stream(int fd): fd_(fd), state_(State::CLOSED),
+        last_activity_(::time(nullptr)),
+        callbacks_(kEventNum) {}
+    Stream(): Stream(INVALID_SOCKET_FD) {}
+
     Stream(const Stream&) = delete;
     Stream& operator=(const Stream&) = delete;
 
@@ -45,6 +49,7 @@ private:
 
     const static int kBufferLength = 1024;
     const static int kEventNum = 6;
+    const static int INVALID_SOCKET_FD = -1;
     std::vector<Callback> callbacks_;
     int fd_;
     State state_;
