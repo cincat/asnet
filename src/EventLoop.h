@@ -22,7 +22,10 @@ public:
     Stream* newStream();
 private:
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
-    std::vector<struct epoll_event> epoll_event_list_;
+    std::vector<Stream*> stream_buffer_;
+    const static int kEventNum = 1000;
+    // int efd_;
+    // std::vector<struct epoll_event> epoll_event_list_;
 };
 
 class StreamPtrHeap {

@@ -8,7 +8,11 @@
 namespace asnet {
     bool streamComp(Stream *, Stream*);
     EventLoop::EventLoop(): streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)){
-
+        // efd_ = epoll_create(1);
+        // // fix me: add some log information
+        // if (efd_ < 0) {
+        //     return;
+        // }
     }
 
     void EventLoop::run() {
@@ -25,29 +29,55 @@ namespace asnet {
             return;
         }
 
-        for (auto item : streams_) {
-            struct epoll_event event;
-            event.data.ptr = item;
-            epoll_ctl(efd, EPOLL_CTL_ADD, item->getFd(), &event);
-        }
-        
-        epoll_wait(efd, &*epoll_event_list_.begin(), epoll_event_list_.size(), block_time);
-
-        for (auto event : epoll_event_list_) {
-            if (event.events == 0) continue;
-            stream = static_cast<Stream *>(event.data.ptr);
-
-            if ((event.events == EPOLLIN | EPOLLPRI) && stream->getState == Stream::State::LISTENNING) {
-                stream->setState(Stream::State::CONNECTED);
+        for (auto stream_ptr : stream_buffer_) {
+            if (stream_ptr->getState() == Stream::State::CONNECTING) {
+                struct epoll_event event;
+                event.events = EPOLLOUT;
+                event.data.ptr = stream_ptr;
+                epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
             }
+            else if (stream_ptr->getState() == Stream::State::LISTENNING) {
+                struct epoll_event event;
+                event.events = EPOLLIN;
+                event.data.ptr = stream_ptr;
+                epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
+            }
+            else if (stream_ptr->getState() == Stream::State::CONNECTED) {
+                struct epoll_event event;
+                event.events = EPOLLIN;
+                if (stream_ptr->writable()) event.events |= EPOLLOUT;
+                event.data.ptr = stream_ptr;
+                epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
+            }
+            else if (stream_ptr->getState() == Stream::State::CLOSING) {
+                struct epoll_event event;
+                event.events = EPOLLOUT;
+                event.data.ptr = stream_ptr;
+                epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
+            }
+            streams_.insert(stream_ptr);
+        }
+        stream_buffer_.clear();
+
+        struct epoll_event event_list[kEventNum];
+        int nfds;
+        nfds = epoll_wait(efd, event_list, kEventNum, block_time);
+        // fix me: add log information
+        if (nfds < 0) {
+            return ;
+        }
+
+        for (int i = 0; i < nfds; i++) {
+
         }
     }
     Stream* EventLoop::newStream() {
         Stream *stream = new Stream();
-        streams_.insert(stream);
-        struct epoll_event event;
-        event.data.ptr = stream;
-        epoll_event_list_.push_back(event);
+        stream_buffer_.push_back(stream);
+        // streams_.insert(stream);
+        // struct epoll_event event;
+        // event.data.ptr = stream;
+        // epoll_event_list_.push_back(event);
         return stream;
     }
 
