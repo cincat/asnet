@@ -23,8 +23,8 @@ public:
     Stream* newStream(int fd);
 private:
 
-    void registerEvent(int);
-    void waitEvent(int, long);
+    void registerStreamEvent(int);
+    void handleStreamEvent(int, long);
 
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_;

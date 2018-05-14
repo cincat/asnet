@@ -18,7 +18,7 @@ namespace asnet {
             stream = *streams_.begin();
         }
         if (stream == nullptr) return;
-        long block_time = stream->getExpiredTime();
+        long block_time = stream->getExpiredTimeAsMicroscends();
         int efd = ::epoll_create(1);
         // fix me
         if (efd < 0) {
@@ -26,14 +26,25 @@ namespace asnet {
         }
 
         while (true) {
-            registerEvent(efd);
-            waitEvent(efd, block_time);
+            registerStreamEvent(efd);
+            handleStreamEvent(efd, block_time);
+            for (auto stream : streams_) {
+
+                if (stream->getExpiredTimeAsMicroscends() > 0) break;
+
+                if (stream->getTimeout() > 0) {
+                    if (stream->hasCallbackFor(Stream::Event::TIMEOUT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TIMEOUT);
+                        callback(stream);
+                    }
+                }
+            }
         }
 
         
     }
 
-    void EventLoop::registerEvent(int efd) {
+    void EventLoop::registerStreamEvent(int efd) {
         for (auto stream_ptr : stream_buffer_) {
             if (stream_ptr->getState() == Stream::State::CONNECTING) {
                 struct epoll_event event;
@@ -65,7 +76,7 @@ namespace asnet {
         stream_buffer_.clear();
     }
 
-    void EventLoop::waitEvent(int efd, long block_time) {
+    void EventLoop::handleStreamEvent(int efd, long block_time) {
         struct epoll_event event_list[kEventNum];
         int nfds;
         nfds = epoll_wait(efd, event_list, kEventNum, block_time);

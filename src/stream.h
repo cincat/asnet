@@ -54,13 +54,13 @@ public:
     void connect(char* addr, int port);
     void addCallback(Event type, Callback callback);
     // return time left until next time expired event, time unit is milliseconds
-    long getExpiredTime();
+    // long getExpiredTime();
     int getFd() {return fd_;}
     void setFd(int fd) {fd_ = fd;}
     State getState() {return state_;}
     void setState(State state) {state_ = state;}
     bool writable() {return write_index_ > 0;}
-    friend bool streamComp(Stream *, Stream*);
+    // friend bool streamComp(Stream *, Stream*);
     bool hasCallbackFor(Event ev) {return callbacks_[ev] == nullptr;}
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
     void runAfter(int timeout, Callback callback);
@@ -70,7 +70,9 @@ public:
     void setTiktok(int tiktok) {tiktok_ = tiktok;}
     int getTiktok() {return tiktok_;}
     void setLastactivityAsCurrent();
+    long long getLastActivity() {return last_activity_;}
     long long getCurrentTimeAsMicroscends();
+    int getExpiredTimeAsMicroscends();
 private:
 
     const static int kBufferLength = 1024;

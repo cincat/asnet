@@ -5,10 +5,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <limits>
+
 
 namespace asnet {
     bool streamComp(Stream *as, Stream *bs) {
-        return (as->last_activity_ + as->timeout_) < (bs->last_activity_ + bs->timeout_);
+        // return (as->last_activity_ + as->timeout_) < (bs->last_activity_ + bs->timeout_);
+        return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
     }
 
     void Stream::addCallback(Event ev, Callback callback) {
@@ -71,13 +74,32 @@ namespace asnet {
         long long time_as_mirosenconds = current_time.tv_sec * 1000 + current_time.tv_usec / 1000;
         return time_as_mirosenconds;
     }
+
+    int Stream::getExpiredTimeAsMicroscends() {
+        if (getTimeout() == 0 && getTiktok() == 0) {
+            return std::numeric_limits<int>::max();
+        }
+        if (getTimeout() != 0 && getTiktok() != 0) {
+            long long mostRecentExpiredTime = std::min(getTimeout(), getTiktok());
+            return mostRecentExpiredTime - (getCurrentTimeAsMicroscends() - getLastActivity());
+        }
+        else if (getTimeout()) {
+            return getTimeout() - (getCurrentTimeAsMicroscends() - getLastActivity());
+        }
+        else if (getTiktok()) {
+            return getTiktok() - (getCurrentTimeAsMicroscends() - getLastActivity());
+        }
+    }
+    // note: timeout and tiktok unit is second.
     void Stream::runAfter(int timeout, Callback callback) {
         setLastactivityAsCurrent();
-        setTimeout(timeout);
+        setTimeout(timeout * 1000);
+        addCallback(Event::TIMEOUT, callback);
     }
 
     void Stream::runEvery(int tiktok, Callback callback) {
         setLastactivityAsCurrent();
-        setTiktok(tiktok);
+        setTiktok(tiktok * 1000);
+        addCallback(Event::TICTOK, callback);
     }
 }
