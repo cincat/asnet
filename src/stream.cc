@@ -8,7 +8,7 @@
 
 namespace asnet {
     bool streamComp(Stream *as, Stream *bs) {
-        return (as->last_activity_ + as->time_out_) < (bs->last_activity_ + bs->time_out_);
+        return (as->last_activity_ + as->timeout_) < (bs->last_activity_ + bs->timeout_);
     }
 
     void Stream::addCallback(Event ev, Callback callback) {
@@ -59,5 +59,25 @@ namespace asnet {
             return ;
         }
         ::connect(fd, (struct sockaddr*)&remote, sizeof(remote));
+    }
+
+    void Stream::setLastactivityAsCurrent() {
+        
+        last_activity_ = getCurrentTimeAsMicroscends();
+    }
+
+    long long Stream::getCurrentTimeAsMicroscends() {
+        struct timeval current_time;
+        long long time_as_mirosenconds = current_time.tv_sec * 1000 + current_time.tv_usec / 1000;
+        return time_as_mirosenconds;
+    }
+    void Stream::runAfter(int timeout, Callback callback) {
+        setLastactivityAsCurrent();
+        setTimeout(timeout);
+    }
+
+    void Stream::runEvery(int tiktok, Callback callback) {
+        setLastactivityAsCurrent();
+        setTiktok(tiktok);
     }
 }

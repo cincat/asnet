@@ -63,7 +63,14 @@ public:
     friend bool streamComp(Stream *, Stream*);
     bool hasCallbackFor(Event ev) {return callbacks_[ev] == nullptr;}
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
-
+    void runAfter(int timeout, Callback callback);
+    void runEvery(int tiktok, Callback callback);
+    void setTimeout(int timeout) {timeout_ = timeout;}
+    int getTimeout() {return timeout_;}
+    void setTiktok(int tiktok) {tiktok_ = tiktok;}
+    int getTiktok() {return tiktok_;}
+    void setLastactivityAsCurrent();
+    long long getCurrentTimeAsMicroscends();
 private:
 
     const static int kBufferLength = 1024;
@@ -73,7 +80,7 @@ private:
     State state_;
     // time unit is mcro second which is compatible with epoll
     long long last_activity_;
-    int time_out_, tik_tok_;
+    int timeout_, tiktok_;
     char write_buffer_[kBufferLength];
     char read_buffer_[kBufferLength];
     int write_index_;
