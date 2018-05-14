@@ -57,6 +57,8 @@ public:
     void setState(State state) {state_ = state;}
     bool writable() {return write_index_ > 0;}
     friend bool streamComp(Stream *, Stream*);
+    bool hasCallbackFor(Event ev) {return callbacks_[ev] == nullptr;}
+    Callback getCallbackFor(Event ev) {return callbacks_[ev];}
 private:
 
     const static int kBufferLength = 1024;
@@ -66,8 +68,10 @@ private:
     State state_;
     // long active_time_;
     long int last_activity_, time_out_, tik_tok_;
-    char buffer_[kBufferLength];
+    char write_buffer_[kBufferLength];
+    char read_buffer_[kBufferLength];
     int write_index_;
+    int read_index_;
     std::vector<Stream *> associated_streams_;
 };
 

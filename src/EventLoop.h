@@ -20,6 +20,7 @@ public:
 
     void run() ;
     Stream* newStream();
+    Stream* newStream(int fd);
 private:
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_;

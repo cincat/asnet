@@ -1,5 +1,7 @@
 
 #include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 // #include <sys/epoll.h>
 
 #include <EventLoop.h>
@@ -68,17 +70,55 @@ namespace asnet {
         }
 
         for (int i = 0; i < nfds; i++) {
-
+            stream = static_cast<Stream *>(event_list[i].data.ptr);
+            if (event_list[i].events & EPOLLIN) {
+                if (stream->getState() == Stream::State::LISTENNING) {
+                    stream->setState(Stream::State::CONNECTED);
+                    // fix me
+                    int anofd = accept(stream->getFd, nullptr, nullptr);
+                    if (anofd < 0) {
+                        return ;
+                    }
+                    Stream *ano_stream = newStream(anofd);
+                    ano_stream->setState(Stream::State::CONNECTED);
+                    if (stream->hasCallbackFor(Stream::Event::ACCEPT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::ACCEPT);
+                        callback(ano_stream);
+                    }
+                }
+                else if (stream->getState() == Stream::State::CONNECTED) {
+                    if (stream->hasCallbackFor(Stream::Event::READ)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::READ);
+                        callback(stream);
+                    }
+                }
+            }
+            else if (event_list[i].events & EPOLLOUT) {
+                if (stream->getState() == Stream::State::CONNECTING) {
+                    stream->setState(Stream::State::CONNECTED);
+                    if (stream->hasCallbackFor(Stream::Event::CONNECT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::CONNECT);
+                        callback(stream);
+                    }
+                }
+                else if (stream->getState == Stream::State::CONNECTED) {
+                    if (stream->hasCallbackFor(Stream::Event::WRITE)) {
+                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::WRITE);
+                        callback(stream);
+                    }
+                }
+            }
         }
     }
-    Stream* EventLoop::newStream() {
-        Stream *stream = new Stream();
+    Stream* EventLoop::newStream(int fd) {
+        Stream *stream = new Stream(fd);
         stream_buffer_.push_back(stream);
-        // streams_.insert(stream);
-        // struct epoll_event event;
-        // event.data.ptr = stream;
-        // epoll_event_list_.push_back(event);
         return stream;
     }
 
+    Stream* EventLoop::newStream() {
+        Stream *stream = new Stream(Stream::INVALID_SOCKET_FD);
+        stream_buffer_.push_back(stream);
+        return stream;
+    }
 }
