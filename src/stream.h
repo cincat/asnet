@@ -6,6 +6,15 @@
 
 namespace asnet {
 
+enum Event{
+        WRITE,
+        READ,
+        ACCEPT,
+        CONNECT,
+        TIMEOUT,
+        TICTOK
+};
+
 class Stream {
 public:
     using Callback = std::function<void (Stream *)>;
@@ -18,14 +27,7 @@ public:
         CONNECTED,
         LISTENNING
     };
-    enum Event{
-        WRITE,
-        READ,
-        ACCEPT,
-        CONNECT,
-        TIMEOUT,
-        TICTOK
-    };
+
 
     // Stream(): state_(State::CLOSED),
     //     last_activity_(::time(NULL)),

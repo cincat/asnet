@@ -8,6 +8,7 @@
 #include <stream.h>
 
 namespace asnet {
+    enum Event;
     bool streamComp(Stream *, Stream*);
     EventLoop::EventLoop(): streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)){
     }
@@ -33,22 +34,22 @@ namespace asnet {
                 if (stream->getExpiredTimeAsMicroscends() > 0) break;
 
                 if (stream->getTimeout() > 0 && stream->getTiktok() == 0) {
-                    if (stream->hasCallbackFor(Stream::Event::TIMEOUT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TIMEOUT);
+                    if (stream->hasCallbackFor(Event::TIMEOUT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
                         callback(stream);
                     }
                 }
                 else if (stream->getTimeout() == 0 && stream->getTiktok() > 0) {
-                    if (stream->hasCallbackFor(Stream::Event::TICTOK)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TICTOK);
+                    if (stream->hasCallbackFor(Event::TICTOK)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
                         // fix me: should adjust stream position in set(balance tree)
                         stream->setLastactivityAsCurrent();
                         callback(stream);
                     }
                 }
                 else if (stream->getTiktok() < stream->getTimeout()) {
-                    if (stream->hasCallbackFor(Stream::Event::TICTOK)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TICTOK);
+                    if (stream->hasCallbackFor(Event::TICTOK)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
                         // fix me:
                         stream->setTimeout(stream->getTimeout() - (stream->getCurrentTimeAsMicroscends() - stream->getLastActivity()));
                         stream->setLastactivityAsCurrent();
@@ -56,8 +57,8 @@ namespace asnet {
                     }
                 }
                 else if (stream->getTimeout() < stream->getTiktok()) {
-                    if (stream->hasCallbackFor(Stream::Event::TIMEOUT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::TIMEOUT);
+                    if (stream->hasCallbackFor(Event::TIMEOUT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
                         callback(stream);
                     }
                 }
@@ -120,14 +121,14 @@ namespace asnet {
                     }
                     Stream *ano_stream = newStream(anofd);
                     ano_stream->setState(Stream::State::CONNECTED);
-                    if (stream->hasCallbackFor(Stream::Event::ACCEPT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::ACCEPT);
+                    if (stream->hasCallbackFor(Event::ACCEPT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::ACCEPT);
                         callback(ano_stream);
                     }
                 }
                 else if (stream->getState() == Stream::State::CONNECTED) {
-                    if (stream->hasCallbackFor(Stream::Event::READ)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::READ);
+                    if (stream->hasCallbackFor(Event::READ)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::READ);
                         callback(stream);
                     }
                 }
@@ -135,14 +136,14 @@ namespace asnet {
             else if (event_list[i].events & EPOLLOUT) {
                 if (stream->getState() == Stream::State::CONNECTING) {
                     stream->setState(Stream::State::CONNECTED);
-                    if (stream->hasCallbackFor(Stream::Event::CONNECT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::CONNECT);
+                    if (stream->hasCallbackFor(Event::CONNECT)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::CONNECT);
                         callback(stream);
                     }
                 }
                 else if (stream->getState == Stream::State::CONNECTED) {
-                    if (stream->hasCallbackFor(Stream::Event::WRITE)) {
-                        Stream::Callback callback = stream->getCallbackFor(Stream::Event::WRITE);
+                    if (stream->hasCallbackFor(Event::WRITE)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::WRITE);
                         callback(stream);
                     }
                 }

@@ -2,6 +2,7 @@
 #include <stream.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -9,6 +10,16 @@
 
 
 namespace asnet {
+    
+    enum Event{
+        WRITE,
+        READ,
+        ACCEPT,
+        CONNECT,
+        TIMEOUT,
+        TICTOK
+    };
+
     bool streamComp(Stream *as, Stream *bs) {
         // return (as->last_activity_ + as->timeout_) < (bs->last_activity_ + bs->timeout_);
         return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
@@ -71,6 +82,10 @@ namespace asnet {
 
     long long Stream::getCurrentTimeAsMicroscends() {
         struct timeval current_time;
+        int err = gettimeofday(&current_time, nullptr);
+        if (err < 0) {
+            return -1;
+        }
         long long time_as_mirosenconds = current_time.tv_sec * 1000 + current_time.tv_usec / 1000;
         return time_as_mirosenconds;
     }
