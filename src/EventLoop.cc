@@ -7,19 +7,26 @@
 #include <EventLoop.h>
 #include <stream.h>
 
+#include <limits>
+
 namespace asnet {
     enum Event;
     bool streamComp(Stream *, Stream*);
     EventLoop::EventLoop(): streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)){
     }
 
-    void EventLoop::run() {
+    long long EventLoop::getBlockTime() {
         Stream *stream = nullptr;
         if (streams_.empty() == false) {
             stream = *streams_.begin();
         }
-        if (stream == nullptr) return;
-        long block_time = stream->getExpiredTimeAsMicroscends();
+        if (stream == nullptr) return std::numeric_limits<int>::max();
+        return stream->getExpiredTimeAsMicroscends();
+    }
+
+    void EventLoop::run() {
+        
+        
         int efd = ::epoll_create(1);
         // fix me
         if (efd < 0) {
@@ -28,7 +35,8 @@ namespace asnet {
 
         while (true) {
             registerStreamEvent(efd);
-            handleStreamEvent(efd, block_time);
+            // long block_time = stream->getExpiredTimeAsMicroscends();
+            handleStreamEvent(efd, getBlockTime());
             for (auto stream : streams_) {
 
                 if (stream->getExpiredTimeAsMicroscends() > 0) break;
@@ -89,12 +97,6 @@ namespace asnet {
                 event.data.ptr = stream_ptr;
                 epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
             }
-            else if (stream_ptr->getState() == Stream::State::CLOSING) {
-                struct epoll_event event;
-                event.events = EPOLLOUT;
-                event.data.ptr = stream_ptr;
-                epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
-            }
             streams_.insert(stream_ptr);
         }
         stream_buffer_.clear();
@@ -113,22 +115,24 @@ namespace asnet {
             Stream *stream = static_cast<Stream *>(event_list[i].data.ptr);
             if (event_list[i].events & EPOLLIN) {
                 if (stream->getState() == Stream::State::LISTENNING) {
-                    stream->setState(Stream::State::CONNECTED);
+                    // stream->setState(Stream::State::CONNECTED);
                     // fix me
-                    int anofd = accept(stream->getFd, nullptr, nullptr);
+                    int anofd = accept(stream->getFd(), nullptr, nullptr);
                     if (anofd < 0) {
                         return ;
                     }
                     Stream *ano_stream = newStream(anofd);
                     ano_stream->setState(Stream::State::CONNECTED);
-                    if (stream->hasCallbackFor(Event::ACCEPT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::ACCEPT);
-                        callback(ano_stream);
+
+                    if (stream->hasCallbackFor(Event::DATA)) {
+                        ano_stream->addCallback(Event::DATA, stream->getCallbackFor(Event::DATA));
                     }
+                    stream_buffer_.push_back(ano_stream);
+        
                 }
                 else if (stream->getState() == Stream::State::CONNECTED) {
-                    if (stream->hasCallbackFor(Event::READ)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::READ);
+                    if (stream->hasCallbackFor(Event::DATA)) {
+                        Stream::Callback callback = stream->getCallbackFor(Event::DATA);
                         callback(stream);
                     }
                 }
@@ -142,9 +146,8 @@ namespace asnet {
                     }
                 }
                 else if (stream->getState == Stream::State::CONNECTED) {
-                    if (stream->hasCallbackFor(Event::WRITE)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::WRITE);
-                        callback(stream);
+                    if (stream->writable()) {
+                        stream->write();
                     }
                 }
             }

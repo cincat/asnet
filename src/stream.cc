@@ -5,24 +5,35 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #include <limits>
 
 
 namespace asnet {
-    
-    enum Event{
-        WRITE,
-        READ,
-        ACCEPT,
-        CONNECT,
-        TIMEOUT,
-        TICTOK
-    };
 
     bool streamComp(Stream *as, Stream *bs) {
         // return (as->last_activity_ + as->timeout_) < (bs->last_activity_ + bs->timeout_);
         return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
+    }
+
+    int Stream::write() {
+        int err = 0;
+        err = ::write(fd_, write_buffer_, write_index_);
+        if (err < 0) {
+            return err;
+        }
+        return 0;
+    }
+
+    int Stream::write(char *ptr, int len) {
+        if (len + write_index_ >= kBufferLength) {
+            return -1;
+        }
+
+        ::strncpy(write_buffer_ + write_index_, ptr, len);
+        write_index_ += len;
+        return len;
     }
 
     void Stream::addCallback(Event ev, Callback callback) {

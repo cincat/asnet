@@ -13,7 +13,7 @@ class Stream;
 class EventLoop {
 public:
 
-    EventLoop();
+    EventLoop(): streams_(streamComp){};
 
     EventLoop(const EventLoop &) = delete;
     EventLoop& operator=(const EventLoop &) = delete;
@@ -23,6 +23,7 @@ public:
     Stream* newStream(int fd);
 private:
 
+    long long getBlockTime();
     void registerStreamEvent(int);
     void handleStreamEvent(int, long);
 
