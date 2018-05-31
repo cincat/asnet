@@ -1,3 +1,6 @@
+#ifndef STREAM_H
+#define STREAM_H
+
 #include <vector>
 #include <functional>
 
@@ -24,7 +27,7 @@ public:
         CLOSING,
         CONNECTING,
         CONNECTED,
-        LISTENNING
+        LISTENING
     };
 
 
@@ -33,7 +36,7 @@ public:
     //     callbacks_(kEventNum){}
     Stream(int fd): fd_(fd), state_(State::CLOSED),
         // last_activity_(::time(nullptr)),
-        callbacks_(kEventNum),
+        callbacks_(kEventNum, nullptr),
         write_index_(0) {}
     Stream(): Stream(INVALID_SOCKET_FD) {
         // struct timeval cur_time;
@@ -62,7 +65,7 @@ public:
     void setState(State state) {state_ = state;}
     bool writable() {return write_index_ > 0;}
     // friend bool streamComp(Stream *, Stream*);
-    bool hasCallbackFor(Event ev) {return callbacks_[ev] == nullptr;}
+    bool hasCallbackFor(Event ev) {return callbacks_[ev] != nullptr;}
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
     void runAfter(int timeout, Callback callback);
     void runEvery(int tiktok, Callback callback);
@@ -94,3 +97,5 @@ private:
 };
 
 }// end of the namespace asnet
+
+#endif

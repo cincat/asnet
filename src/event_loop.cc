@@ -2,10 +2,12 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <errno.h>
 // #include <sys/epoll.h>
 
-#include <EventLoop.h>
+#include <event_loop.h>
 #include <stream.h>
+#include <log.h>
 
 #include <limits>
 
@@ -84,7 +86,7 @@ namespace asnet {
                 event.data.ptr = stream_ptr;
                 epoll_ctl(efd, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
             }
-            else if (stream_ptr->getState() == Stream::State::LISTENNING) {
+            else if (stream_ptr->getState() == Stream::State::LISTENING) {
                 struct epoll_event event;
                 event.events = EPOLLIN;
                 event.data.ptr = stream_ptr;
@@ -114,18 +116,22 @@ namespace asnet {
         for (int i = 0; i < nfds; i++) {
             Stream *stream = static_cast<Stream *>(event_list[i].data.ptr);
             if (event_list[i].events & EPOLLIN) {
-                if (stream->getState() == Stream::State::LISTENNING) {
+                if (stream->getState() == Stream::State::LISTENING) {
                     // stream->setState(Stream::State::CONNECTED);
                     // fix me
                     int anofd = accept(stream->getFd(), nullptr, nullptr);
                     if (anofd < 0) {
+                        LOG_ERR << strerror(errno) << "\n";
                         return ;
                     }
                     Stream *ano_stream = newStream(anofd);
                     ano_stream->setState(Stream::State::CONNECTED);
+                    // fix me : should add associated streams
 
-                    if (stream->hasCallbackFor(Event::DATA)) {
-                        ano_stream->addCallback(Event::DATA, stream->getCallbackFor(Event::DATA));
+                    if (stream->hasCallbackFor(Event::ACCEPT)) {
+                        Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
+                        // ano_stream->addCallback(Event::ACCEPT, stream->getCallbackFor(Event::ACCEPT));
+                        listener(ano_stream);
                     }
                     stream_buffer_.push_back(ano_stream);
         
@@ -139,13 +145,18 @@ namespace asnet {
             }
             else if (event_list[i].events & EPOLLOUT) {
                 if (stream->getState() == Stream::State::CONNECTING) {
+                    int err = 0;
+                    getsockopt(stream->getFd(), SOL_SOCKET, SO_ERROR, &err, nullptr);
+                    if (err != 0) {
+                        LOG_ERROR << strerror(err) << "\n";
+                    }
                     stream->setState(Stream::State::CONNECTED);
                     if (stream->hasCallbackFor(Event::CONNECT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::CONNECT);
                         callback(stream);
                     }
                 }
-                else if (stream->getState == Stream::State::CONNECTED) {
+                else if (stream->getState() == Stream::State::CONNECTED) {
                     if (stream->writable()) {
                         stream->write();
                     }

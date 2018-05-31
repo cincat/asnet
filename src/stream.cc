@@ -1,13 +1,17 @@
-
-#include <stream.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <limits>
+
+
+#include <stream.h>
+#include <log.h>
 
 
 namespace asnet {
@@ -61,10 +65,22 @@ namespace asnet {
         err = ::bind(fd, (struct sockaddr *)&local, sizeof(local));
         if (err < 0) {
             // fix me:
+            LOG_FATAL << "error occurs during bind\n";
             return ;
         }
-        
-        ::listen(fd, 500);
+
+        // int flags = fcntl(fd, F_GETFL);
+        // err = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+        // if (err < 0) {
+        //     LOG_ERROR << "set unblocking socket fd failed\n";
+        // }
+        err = ::listen(fd, 500);
+        if (err < 0) {
+            LOG_ERR << strerror(errno) << "\n";
+        }
+
+        setState(State::LISTENING);
         setFd(fd);
     }
 
@@ -81,9 +97,21 @@ namespace asnet {
         int err = 0;
         err = inet_aton(addr, &remote.sin_addr);
         if (err < 0) {
+            LOG_ERROR << "change ip address from input failed\n";
             return ;
         }
-        ::connect(fd, (struct sockaddr*)&remote, sizeof(remote));
+
+        int flags = fcntl(fd, F_GETFL);
+        err = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+        if (err < 0) {
+            LOG_ERROR << "set unblocking socker fd failed\n";
+        }
+        err = ::connect(fd, (struct sockaddr*)&remote, sizeof(remote));
+        
+        if (err < 0 && errno != EINPROGRESS) {
+            LOG_ERROR << "connect to remote address failed:" << strerror(errno);
+        }
+        setState(State::CONNECTING);
     }
 
     void Stream::setLastactivityAsCurrent() {

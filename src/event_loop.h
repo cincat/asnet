@@ -1,3 +1,6 @@
+#ifndef EVENTLOOP_H
+#define EVENTLOOP_H
+
 #include <set>
 #include <functional>
 #include <vector>
@@ -8,12 +11,13 @@
 namespace asnet {
 
 class Stream;
+//bool streamComp(Stream *, Stream *);
 // struct epoll_event;
 
 class EventLoop {
 public:
 
-    EventLoop(): streams_(streamComp){};
+    EventLoop();
 
     EventLoop(const EventLoop &) = delete;
     EventLoop& operator=(const EventLoop &) = delete;
@@ -39,3 +43,5 @@ class StreamPtrHeap {
 };
 
 }// end of asnet namespace
+
+#endif
