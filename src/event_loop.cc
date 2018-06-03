@@ -12,7 +12,6 @@
 #include <limits>
 
 namespace asnet {
-    enum Event;
     bool streamComp(Stream *, Stream*);
     EventLoop::EventLoop(): streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)){
     }
@@ -46,7 +45,8 @@ namespace asnet {
                 if (stream->getTimeout() > 0 && stream->getTiktok() == 0) {
                     if (stream->hasCallbackFor(Event::TIMEOUT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
-                        callback(stream);
+                        Event event(stream, nullptr);
+                        callback(event);
                     }
                 }
                 else if (stream->getTimeout() == 0 && stream->getTiktok() > 0) {
@@ -54,7 +54,9 @@ namespace asnet {
                         Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
                         // fix me: should adjust stream position in set(balance tree)
                         stream->setLastactivityAsCurrent();
-                        callback(stream);
+                        Event event(stream, nullptr);
+                        callback(event);
+                        // callback(stream);
                     }
                 }
                 else if (stream->getTiktok() < stream->getTimeout()) {
@@ -63,13 +65,17 @@ namespace asnet {
                         // fix me:
                         stream->setTimeout(stream->getTimeout() - (stream->getCurrentTimeAsMicroscends() - stream->getLastActivity()));
                         stream->setLastactivityAsCurrent();
-                        callback(stream);
+                        // callback(stream);
+                        Event event(stream, nullptr);
+                        callback(event);
                     }
                 }
                 else if (stream->getTimeout() < stream->getTiktok()) {
                     if (stream->hasCallbackFor(Event::TIMEOUT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
-                        callback(stream);
+                        // callback(stream);
+                        Event event(stream, nullptr);
+                        callback(event);
                     }
                 }
             }
@@ -121,25 +127,30 @@ namespace asnet {
                     // fix me
                     int anofd = accept(stream->getFd(), nullptr, nullptr);
                     if (anofd < 0) {
-                        LOG_ERR << strerror(errno) << "\n";
+                        LOG_ERROR << strerror(errno) << std::endl;
                         return ;
                     }
+                    LOG_INFO << "successfully accepted a new fd " << anofd << std::endl;
                     Stream *ano_stream = newStream(anofd);
                     ano_stream->setState(Stream::State::CONNECTED);
-                    // fix me : should add associated streams
+                    // fix me : should add associated streamscd 
 
                     if (stream->hasCallbackFor(Event::ACCEPT)) {
+                        LOG_INFO << "stream has register a accept listener" << "\n";
                         Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
                         // ano_stream->addCallback(Event::ACCEPT, stream->getCallbackFor(Event::ACCEPT));
-                        listener(ano_stream);
+                        Event event(stream, ano_stream);
+                        listener(event);
                     }
-                    stream_buffer_.push_back(ano_stream);
+                    // stream_buffer_.push_back(ano_stream);
         
                 }
                 else if (stream->getState() == Stream::State::CONNECTED) {
+                    LOG_INFO << "data have reached\n";
                     if (stream->hasCallbackFor(Event::DATA)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::DATA);
-                        callback(stream);
+                        Event event(stream, nullptr);
+                        callback(event);
                     }
                 }
             }
@@ -153,8 +164,13 @@ namespace asnet {
                     stream->setState(Stream::State::CONNECTED);
                     if (stream->hasCallbackFor(Event::CONNECT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::CONNECT);
-                        callback(stream);
+                        Event event(stream, nullptr);
+                        callback(event);
                     }
+                    //
+                    epoll_ctl(efd, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+                    streams_.erase(stream);
+                    stream_buffer_.push_back(stream);
                 }
                 else if (stream->getState() == Stream::State::CONNECTED) {
                     if (stream->writable()) {
@@ -172,8 +188,9 @@ namespace asnet {
     }
 
     Stream* EventLoop::newStream() {
-        Stream *stream = new Stream(Stream::INVALID_SOCKET_FD);
-        stream_buffer_.push_back(stream);
-        return stream;
+        // Stream *stream = new Stream(Stream::INVALID_SOCKET_FD);
+        // stream_buffer_.push_back(stream);
+        // return stream;
+        return newStream(Stream::INVALID_SOCKET_FD);
     }
 }

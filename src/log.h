@@ -1,5 +1,6 @@
 #include <string.h>
 #include <iostream>
+#include <sys/time.h>
 
 namespace asnet {
 
@@ -15,14 +16,16 @@ class Log {
 public:
     Log(LOG_LEVEL level) {
         switch(level) {
-            case INFO: ::strcpy(prefix, "[INFO]:"); break;
-            case ERROR: ::strcpy(prefix, "[ERROR]:"); break;
-            case DEBUG: ::strcpy(prefix, "[DEBUG]:"); break;
+            case INFO: ::strcpy(prefix, "[INFO]: "); break;
+            case ERROR: ::strcpy(prefix, "[ERROR]: "); break;
+            case DEBUG: ::strcpy(prefix, "[DEBUG]: "); break;
         }
     }
 
     template <typename T>
     std::ostream& operator <<(const T &s) {
+        // struct timeval val;
+        // gettimeofday(&val, nullptr);
         std::cerr << prefix << s;
         if (::strlen(prefix) > 1) {
             ::memset(prefix, 0, sizeof(prefix));

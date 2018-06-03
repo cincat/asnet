@@ -21,12 +21,18 @@ namespace asnet {
         return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
     }
 
+    // fix me : this is inefficient
     int Stream::write() {
-        int err = 0;
-        err = ::write(fd_, write_buffer_, write_index_);
-        if (err < 0) {
-            return err;
+        int n = 0;
+        n = ::write(fd_, write_buffer_, write_index_);
+        if (n < 0) {
+            return n;
         }
+        LOG_INFO << "successfully write " << n << "bytes on fd " << fd_ << "\n";
+        if (n == write_index_) {
+            write_index_ = 0;
+        }
+        memmove(write_buffer_, write_buffer_ + n, write_index_ - n);
         return 0;
     }
 
@@ -40,7 +46,7 @@ namespace asnet {
         return len;
     }
 
-    void Stream::addCallback(Event ev, Callback callback) {
+    void Stream::addCallback(Event::Type ev, Callback callback) {
         // fix me: log error information
         if (callbacks_[ev] != nullptr) {
             return ;
@@ -77,7 +83,7 @@ namespace asnet {
         // }
         err = ::listen(fd, 500);
         if (err < 0) {
-            LOG_ERR << strerror(errno) << "\n";
+            LOG_ERROR << strerror(errno) << "\n";
         }
 
         setState(State::LISTENING);
@@ -111,6 +117,8 @@ namespace asnet {
         if (err < 0 && errno != EINPROGRESS) {
             LOG_ERROR << "connect to remote address failed:" << strerror(errno);
         }
+
+        LOG_INFO << "successfully listened on port " << port << "\n";
         setState(State::CONNECTING);
     }
 
@@ -156,4 +164,8 @@ namespace asnet {
         setTiktok(tiktok * 1000);
         addCallback(Event::TICTOK, callback);
     }
-}
+
+    void Stream::close() {
+        setState(State::CLOSING);
+    }
+}// end of namespace asnet

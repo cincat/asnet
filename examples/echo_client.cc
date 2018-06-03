@@ -1,12 +1,19 @@
 #include <stream.h>
 #include <event_loop.h>
+#include <log.h>
 
 #include <unistd.h>
 #include <string.h>
 
-void onData(asnet::Stream *s) {
+using namespace asnet;
+
+void onData(asnet::Event e) {
     char buffer[16] = {'\0'};
-    ::read(s->getFd(), buffer, 16);
+    int n = ::read(e.getLocal()->getFd(), buffer, 16);
+    if (n == 0) {
+        e.getLocal()->close();
+    }
+    LOG_INFO << "has successfully read " << n << " bytes \n";
     ::write(STDOUT_FILENO, buffer, strlen(buffer));
 }
 
