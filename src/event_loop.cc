@@ -122,7 +122,7 @@ namespace asnet {
         for (int i = 0; i < nfds; i++) {
             Stream *stream = static_cast<Stream *>(event_list[i].data.ptr);
             if (event_list[i].events & EPOLLIN) {
-                if (stream->getState() == Stream::State::LISTENING) {
+                if (stream->getState() == State::LISTENING) {
                     // stream->setState(Stream::State::CONNECTED);
                     // fix me
                     int anofd = accept(stream->getFd(), nullptr, nullptr);
@@ -132,7 +132,7 @@ namespace asnet {
                     }
                     LOG_INFO << "successfully accepted a new fd " << anofd << std::endl;
                     Stream *ano_stream = newStream(anofd);
-                    ano_stream->setState(Stream::State::CONNECTED);
+                    ano_stream->setState(State::CONNECTED);
                     // fix me : should add associated streamscd 
 
                     if (stream->hasCallbackFor(Event::ACCEPT)) {
@@ -145,7 +145,7 @@ namespace asnet {
                     // stream_buffer_.push_back(ano_stream);
         
                 }
-                else if (stream->getState() == Stream::State::CONNECTED) {
+                else if (stream->getState() == State::CONNECTED) {
                     LOG_INFO << "data have reached\n";
                     if (stream->hasCallbackFor(Event::DATA)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::DATA);
@@ -155,13 +155,13 @@ namespace asnet {
                 }
             }
             else if (event_list[i].events & EPOLLOUT) {
-                if (stream->getState() == Stream::State::CONNECTING) {
+                if (stream->getState() == State::CONNECTING) {
                     int err = 0;
                     getsockopt(stream->getFd(), SOL_SOCKET, SO_ERROR, &err, nullptr);
                     if (err != 0) {
                         LOG_ERROR << strerror(err) << "\n";
                     }
-                    stream->setState(Stream::State::CONNECTED);
+                    stream->setState(State::CONNECTED);
                     if (stream->hasCallbackFor(Event::CONNECT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::CONNECT);
                         Connection conn(stream, nullptr);
@@ -172,9 +172,19 @@ namespace asnet {
                     streams_.erase(stream);
                     stream_buffer_.push_back(stream);
                 }
-                else if (stream->getState() == Stream::State::CONNECTED) {
+                else if (stream->getState() == State::CONNECTED) {
                     if (stream->writable()) {
                         stream->write();
+                    }
+                }
+                else if (stream->getState() == State::CLOSING) {
+                    if (stream->writable()) {
+                        stream->write();
+                    }
+                    // nothin left in the write buffer
+                    if (stream->writable() == false) {
+                        epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+                        stream->setState(State::CLOSED);
                     }
                 }
             }

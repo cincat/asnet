@@ -19,18 +19,21 @@ enum Event{
     TIMEOUT,
     TICTOK
 };
+
+enum State{
+    CLOSED,
+    CLOSING,
+    CONNECTING,
+    CONNECTED,
+    LISTENING
+};
+
 class Stream {
 public:
     using Callback = std::function<void (const Connection&)>;
     const static int INVALID_SOCKET_FD = -1;
 
-    enum State{
-        CLOSED,
-        CLOSING,
-        CONNECTING,
-        CONNECTED,
-        LISTENING
-    };
+
 
 
     // Stream(): state_(State::CLOSED),
@@ -81,7 +84,7 @@ public:
     int getExpiredTimeAsMicroscends();
     int write();
     int write(char*, int);
-    void close();
+    void close() {setState(State::CLOSING);}
 private:
 
     const static int kBufferLength = 1024;
