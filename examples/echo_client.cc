@@ -7,15 +7,16 @@
 
 using namespace asnet;
 
-void onData(asnet::Connection conn) {
+int onData(asnet::Connection conn) {
     char buffer[16] = {'\0'};
     int n = ::read(conn.getLocal()->getFd(), buffer, 16);
     if (n == 0) {
         conn.getLocal()->close();
-        return ;
+        return 0;
     }
     LOG_INFO << "has successfully read " << n << " bytes \n";
     ::write(STDOUT_FILENO, buffer, strlen(buffer));
+    return n;
 }
 
 int main() {

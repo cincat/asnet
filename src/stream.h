@@ -30,7 +30,7 @@ enum State{
 
 class Stream {
 public:
-    using Callback = std::function<void (const Connection&)>;
+    using Callback = std::function<int (const Connection&)>;
     const static int INVALID_SOCKET_FD = -1;
 
 
@@ -84,7 +84,7 @@ public:
     int getExpiredTimeAsMicroscends();
     int write();
     int write(char*, int);
-    void close() {setState(State::CLOSING);}
+    void close();
 private:
 
     const static int kBufferLength = 1024;

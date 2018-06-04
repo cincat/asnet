@@ -30,8 +30,9 @@ public:
 private:
 
     long long getBlockTime();
-    void registerStreamEvent();
-    void handleStreamEvent(long);
+    void registerStreamEvents();
+    void handleStreamEvents(long);
+    void handleClosedEvents();
 
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_; 

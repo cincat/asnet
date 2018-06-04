@@ -10,6 +10,7 @@
 #include <log.h>
 
 #include <limits>
+#include <vector>
 
 namespace asnet {
     bool streamComp(Stream *, Stream*);
@@ -34,9 +35,9 @@ namespace asnet {
     void EventLoop::run() {
         
         while (true) {
-            registerStreamEvent();
+            registerStreamEvents();
             // long block_time = stream->getExpiredTimeAsMicroscends();
-            handleStreamEvent(getBlockTime());
+            handleStreamEvents(getBlockTime());
             for (auto stream : streams_) {
 
                 if (stream->getExpiredTimeAsMicroscends() > 0) break;
@@ -78,26 +79,30 @@ namespace asnet {
                     }
                 }
             }
+            handleClosedEvents();
+            if (streams_.size() + stream_buffer_.size() == 0) {
+                break;
+            }
         }
 
         
     }
 
-    void EventLoop::registerStreamEvent() {
+    void EventLoop::registerStreamEvents() {
         for (auto stream_ptr : stream_buffer_) {
-            if (stream_ptr->getState() == Stream::State::CONNECTING) {
+            if (stream_ptr->getState() == State::CONNECTING) {
                 struct epoll_event event;
                 event.events = EPOLLOUT;
                 event.data.ptr = stream_ptr;
                 epoll_ctl(efd_, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
             }
-            else if (stream_ptr->getState() == Stream::State::LISTENING) {
+            else if (stream_ptr->getState() == State::LISTENING) {
                 struct epoll_event event;
                 event.events = EPOLLIN;
                 event.data.ptr = stream_ptr;
                 epoll_ctl(efd_, EPOLL_CTL_ADD, stream_ptr->getFd(), &event);
             }
-            else if (stream_ptr->getState() == Stream::State::CONNECTED) {
+            else if (stream_ptr->getState() == State::CONNECTED) {
                 struct epoll_event event;
                 event.events = EPOLLIN;
                 if (stream_ptr->writable()) event.events |= EPOLLOUT;
@@ -109,7 +114,7 @@ namespace asnet {
         stream_buffer_.clear();
     }
 
-    void EventLoop::handleStreamEvent(long block_time) {
+    void EventLoop::handleStreamEvents(long block_time) {
         struct epoll_event event_list[kEventNum];
         int nfds;
         nfds = epoll_wait(efd_, event_list, kEventNum, block_time);
@@ -150,7 +155,8 @@ namespace asnet {
                     if (stream->hasCallbackFor(Event::DATA)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::DATA);
                         Connection conn(stream, nullptr);
-                        callback(conn);
+                        int n = callback(conn);
+                        if (n == 0) {stream->close();}
                     }
                 }
             }
@@ -183,7 +189,6 @@ namespace asnet {
                     }
                     // nothin left in the write buffer
                     if (stream->writable() == false) {
-                        epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
                         stream->setState(State::CLOSED);
                     }
                 }
@@ -191,6 +196,19 @@ namespace asnet {
         }
     }
 
+    void EventLoop::handleClosedEvents() {
+        std::vector<Stream*> buffer_;
+        for (auto stream : streams_) {
+            if (stream->getState() == State::CLOSED) {
+                buffer_.push_back(stream);
+            }
+        }
+        for (auto stream : buffer_) {
+            streams_.erase(stream);
+            epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+            delete stream;
+        }
+    }
     Stream* EventLoop::newStream(int fd) {
         Stream *stream = new Stream(fd);
         stream_buffer_.push_back(stream);
