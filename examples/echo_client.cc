@@ -16,6 +16,7 @@ int onData(asnet::Connection conn) {
     }
     LOG_INFO << "has successfully read " << n << " bytes \n";
     ::write(STDOUT_FILENO, buffer, strlen(buffer));
+    conn.getLocal()->close();
     return n;
 }
 

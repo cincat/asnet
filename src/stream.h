@@ -99,7 +99,7 @@ private:
     // char read_buffer_[kBufferLength];
     int write_index_;
     // int read_index_;
-    std::vector<Stream *> associated_streams_;
+    // std::vector<Stream *> associated_streams_;
 };
 
 }// end of the namespace asnet

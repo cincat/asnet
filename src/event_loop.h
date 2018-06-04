@@ -33,6 +33,7 @@ private:
     void registerStreamEvents();
     void handleStreamEvents(long);
     void handleClosedEvents();
+    void handleTimeoutEvents();
 
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_; 

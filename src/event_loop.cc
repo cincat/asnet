@@ -38,47 +38,9 @@ namespace asnet {
             registerStreamEvents();
             // long block_time = stream->getExpiredTimeAsMicroscends();
             handleStreamEvents(getBlockTime());
-            for (auto stream : streams_) {
+            
+            handleTimeoutEvents();
 
-                if (stream->getExpiredTimeAsMicroscends() > 0) break;
-
-                if (stream->getTimeout() > 0 && stream->getTiktok() == 0) {
-                    if (stream->hasCallbackFor(Event::TIMEOUT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
-                        Connection conn(stream, nullptr);
-                        callback(conn);
-                    }
-                }
-                else if (stream->getTimeout() == 0 && stream->getTiktok() > 0) {
-                    if (stream->hasCallbackFor(Event::TICTOK)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
-                        // fix me: should adjust stream position in set(balance tree)
-                        stream->setLastactivityAsCurrent();
-                        Connection conn(stream, nullptr);
-                        callback(conn);
-                        // callback(stream);
-                    }
-                }
-                else if (stream->getTiktok() < stream->getTimeout()) {
-                    if (stream->hasCallbackFor(Event::TICTOK)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
-                        // fix me:
-                        stream->setTimeout(stream->getTimeout() - (stream->getCurrentTimeAsMicroscends() - stream->getLastActivity()));
-                        stream->setLastactivityAsCurrent();
-                        // callback(stream);
-                        Connection conn(stream, nullptr);
-                        callback(conn);
-                    }
-                }
-                else if (stream->getTimeout() < stream->getTiktok()) {
-                    if (stream->hasCallbackFor(Event::TIMEOUT)) {
-                        Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
-                        // callback(stream);
-                        Connection conn(stream, nullptr);
-                        callback(conn);
-                    }
-                }
-            }
             handleClosedEvents();
             if (streams_.size() + stream_buffer_.size() == 0) {
                 break;
@@ -196,6 +158,50 @@ namespace asnet {
         }
     }
 
+
+    void EventLoop::handleTimeoutEvents() {
+        for (auto stream : streams_) {
+
+            if (stream->getExpiredTimeAsMicroscends() > 0) break;
+
+            if (stream->getTimeout() > 0 && stream->getTiktok() == 0) {
+                if (stream->hasCallbackFor(Event::TIMEOUT)) {
+                    Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
+                    Connection conn(stream, nullptr);
+                    callback(conn);
+                }
+            }
+            else if (stream->getTimeout() == 0 && stream->getTiktok() > 0) {
+                if (stream->hasCallbackFor(Event::TICTOK)) {
+                    Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
+                    // fix me: should adjust stream position in set(balance tree)
+                    stream->setLastactivityAsCurrent();
+                    Connection conn(stream, nullptr);
+                    callback(conn);
+                    // callback(stream);
+                }
+            }
+            else if (stream->getTiktok() < stream->getTimeout()) {
+                if (stream->hasCallbackFor(Event::TICTOK)) {
+                    Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
+                    // fix me:
+                    stream->setTimeout(stream->getTimeout() - (stream->getCurrentTimeAsMicroscends() - stream->getLastActivity()));
+                    stream->setLastactivityAsCurrent();
+                    // callback(stream);
+                    Connection conn(stream, nullptr);
+                    callback(conn);
+                }
+            }
+            else if (stream->getTimeout() < stream->getTiktok()) {
+                if (stream->hasCallbackFor(Event::TIMEOUT)) {
+                    Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
+                    // callback(stream);
+                    Connection conn(stream, nullptr);
+                    callback(conn);
+                }
+            }
+        }
+    }
     void EventLoop::handleClosedEvents() {
         std::vector<Stream*> buffer_;
         for (auto stream : streams_) {
@@ -207,6 +213,7 @@ namespace asnet {
             streams_.erase(stream);
             epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
             delete stream;
+            stream = nullptr;
         }
     }
     Stream* EventLoop::newStream(int fd) {
