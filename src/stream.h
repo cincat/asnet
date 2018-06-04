@@ -7,13 +7,21 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include <event.h>
+#include <connection.h>
 
 namespace asnet {
 // class Event;
+
+enum Event{
+    DATA,
+    ACCEPT,
+    CONNECT,
+    TIMEOUT,
+    TICTOK
+};
 class Stream {
 public:
-    using Callback = std::function<void (const Event&)>;
+    using Callback = std::function<void (const Connection&)>;
     const static int INVALID_SOCKET_FD = -1;
 
     enum State{
@@ -50,7 +58,7 @@ public:
 
     void listen(int port);
     void connect(char* addr, int port);
-    void addCallback(Event::Type type, Callback callback);
+    void addCallback(Event type, Callback callback);
     // return time left until next time expired event, time unit is milliseconds
     // long getExpiredTime();
     int getFd() {return fd_;}
@@ -59,8 +67,8 @@ public:
     void setState(State state) {state_ = state;}
     bool writable() {return write_index_ > 0;}
     // friend bool streamComp(Stream *, Stream*);
-    bool hasCallbackFor(Event::Type ev) {return callbacks_[ev] != nullptr;}
-    Callback getCallbackFor(Event::Type ev) {return callbacks_[ev];}
+    bool hasCallbackFor(Event ev) {return callbacks_[ev] != nullptr;}
+    Callback getCallbackFor(Event ev) {return callbacks_[ev];}
     void runAfter(int timeout, Callback callback);
     void runEvery(int tiktok, Callback callback);
     void setTimeout(int timeout) {timeout_ = timeout;}

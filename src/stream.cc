@@ -46,7 +46,7 @@ namespace asnet {
         return len;
     }
 
-    void Stream::addCallback(Event::Type ev, Callback callback) {
+    void Stream::addCallback(Event ev, Callback callback) {
         // fix me: log error information
         if (callbacks_[ev] != nullptr) {
             return ;

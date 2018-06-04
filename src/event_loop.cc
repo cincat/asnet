@@ -45,8 +45,8 @@ namespace asnet {
                 if (stream->getTimeout() > 0 && stream->getTiktok() == 0) {
                     if (stream->hasCallbackFor(Event::TIMEOUT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
-                        Event event(stream, nullptr);
-                        callback(event);
+                        Connection conn(stream, nullptr);
+                        callback(conn);
                     }
                 }
                 else if (stream->getTimeout() == 0 && stream->getTiktok() > 0) {
@@ -54,8 +54,8 @@ namespace asnet {
                         Stream::Callback callback = stream->getCallbackFor(Event::TICTOK);
                         // fix me: should adjust stream position in set(balance tree)
                         stream->setLastactivityAsCurrent();
-                        Event event(stream, nullptr);
-                        callback(event);
+                        Connection conn(stream, nullptr);
+                        callback(conn);
                         // callback(stream);
                     }
                 }
@@ -66,16 +66,16 @@ namespace asnet {
                         stream->setTimeout(stream->getTimeout() - (stream->getCurrentTimeAsMicroscends() - stream->getLastActivity()));
                         stream->setLastactivityAsCurrent();
                         // callback(stream);
-                        Event event(stream, nullptr);
-                        callback(event);
+                        Connection conn(stream, nullptr);
+                        callback(conn);
                     }
                 }
                 else if (stream->getTimeout() < stream->getTiktok()) {
                     if (stream->hasCallbackFor(Event::TIMEOUT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::TIMEOUT);
                         // callback(stream);
-                        Event event(stream, nullptr);
-                        callback(event);
+                        Connection conn(stream, nullptr);
+                        callback(conn);
                     }
                 }
             }
@@ -116,6 +116,7 @@ namespace asnet {
         nfds = epoll_wait(efd, event_list, kEventNum, block_time);
         // fix me: add log information
         if (nfds < 0) {
+            LOG_ERROR << "epoll_wait error happend!\n";
             return ;
         }
 
@@ -139,8 +140,8 @@ namespace asnet {
                         LOG_INFO << "stream has register a accept listener" << "\n";
                         Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
                         // ano_stream->addCallback(Event::ACCEPT, stream->getCallbackFor(Event::ACCEPT));
-                        Event event(stream, ano_stream);
-                        listener(event);
+                        Connection conn(stream, ano_stream);
+                        listener(conn);
                     }
                     // stream_buffer_.push_back(ano_stream);
         
@@ -149,8 +150,8 @@ namespace asnet {
                     LOG_INFO << "data have reached\n";
                     if (stream->hasCallbackFor(Event::DATA)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::DATA);
-                        Event event(stream, nullptr);
-                        callback(event);
+                        Connection conn(stream, nullptr);
+                        callback(conn);
                     }
                 }
             }
@@ -164,8 +165,8 @@ namespace asnet {
                     stream->setState(Stream::State::CONNECTED);
                     if (stream->hasCallbackFor(Event::CONNECT)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::CONNECT);
-                        Event event(stream, nullptr);
-                        callback(event);
+                        Connection conn(stream, nullptr);
+                        callback(conn);
                     }
                     //
                     epoll_ctl(efd, EPOLL_CTL_DEL, stream->getFd(), nullptr);

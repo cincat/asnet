@@ -9,9 +9,9 @@ void hello() {
     return;
 }
 
-void onAccept(asnet::Event e) {
+void onAccept(asnet::Connection conn) {
     char buffer[16] = "hello, world\n";
-    e.getRemote()->write(buffer, ::strlen(buffer));
+    conn.getRemote()->write(buffer, ::strlen(buffer));
 }
 
 int main() {
