@@ -8,6 +8,8 @@
 
 #include <sys/epoll.h>
 
+// #include <log.h>
+
 namespace asnet {
 
 class Stream;
@@ -28,18 +30,14 @@ public:
 private:
 
     long long getBlockTime();
-    void registerStreamEvent(int);
-    void handleStreamEvent(int, long);
+    void registerStreamEvent();
+    void handleStreamEvent(long);
 
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_;
     const static int kEventNum = 1000;
-    // int efd_;
+    int efd_;
     // std::vector<struct epoll_event> epoll_event_list_;
-};
-
-class StreamPtrHeap {
-
 };
 
 }// end of asnet namespace

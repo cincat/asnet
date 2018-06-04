@@ -1,3 +1,7 @@
+#ifndef LOG_H
+#define LOG_H
+
+
 #include <string.h>
 #include <iostream>
 #include <sys/time.h>
@@ -48,3 +52,5 @@ private:
 #define LOG_DEBUG Log::getLog(DEBUG)
 
 } //end of namespace asent
+
+#endif
