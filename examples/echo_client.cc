@@ -10,13 +10,13 @@ using namespace asnet;
 int onData(asnet::Connection conn) {
     char buffer[16] = {'\0'};
     int n = ::read(conn.getLocal()->getFd(), buffer, 16);
-    if (n == 0) {
-        conn.getLocal()->close();
-        return 0;
-    }
+    // if (n == 0) {
+    //     conn.getLocal()->close();
+    //     return 0;
+    // }
     LOG_INFO << "has successfully read " << n << " bytes \n";
     ::write(STDOUT_FILENO, buffer, strlen(buffer));
-    conn.getLocal()->close();
+    // conn.getLocal()->close();
     return n;
 }
 

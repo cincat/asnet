@@ -8,6 +8,7 @@
 #include <sys/time.h>
 
 #include <connection.h>
+#include <log.h>
 
 namespace asnet {
 // class Event;
@@ -52,6 +53,7 @@ public:
     // fix me: close Stream
     ~Stream() {
         if (fd_ != INVALID_SOCKET_FD) {
+            LOG_INFO << "close fd " << fd_ << "\n";
             ::close(fd_);
         }
     }

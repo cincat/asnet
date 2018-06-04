@@ -37,14 +37,15 @@ namespace asnet {
         while (true) {
             registerStreamEvents();
             // long block_time = stream->getExpiredTimeAsMicroscends();
-            handleStreamEvents(getBlockTime());
-            
-            handleTimeoutEvents();
-
             handleClosedEvents();
             if (streams_.size() + stream_buffer_.size() == 0) {
                 break;
             }
+            handleStreamEvents(getBlockTime());
+            
+            handleTimeoutEvents();
+
+            
         }    
     }
 
@@ -91,6 +92,9 @@ namespace asnet {
                 }
                 else {
                     stream->setState(State::CLOSED);
+                    // delete stream;
+                    // stream = nullptr;
+                    // continue;
                 }
             }
             
