@@ -8,6 +8,7 @@ int onAccept(asnet::Connection conn) {
     char buffer[16] = "hello, world\n";
     conn.getRemote()->write(buffer, ::strlen(buffer));
     // conn.getRemote()->write("", 0);
+    conn.getRemote()->close();
     return strlen(buffer);
 }
 

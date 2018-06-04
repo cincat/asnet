@@ -17,7 +17,10 @@
 namespace asnet {
 
     bool streamComp(Stream *as, Stream *bs) {
-        // return (as->last_activity_ + as->timeout_) < (bs->last_activity_ + bs->timeout_);
+        // pay attention getExpiredTimeAsMicroscends may same
+        if (as->getExpiredTimeAsMicroscends() == bs->getExpiredTimeAsMicroscends()) {
+            return as - bs;
+        }
         return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
     }
 
@@ -28,9 +31,11 @@ namespace asnet {
         if (n < 0) {
             return n;
         }
-        LOG_INFO << "successfully write " << n << "bytes on fd " << fd_ << "\n";
+        LOG_INFO << "successfully write " << n << " bytes on fd " << fd_ << "\n";
         if (n == write_index_) {
             write_index_ = 0;
+            memset(write_buffer_, 0, n);
+            return n;
         }
         memmove(write_buffer_, write_buffer_ + n, write_index_ - n);
         return 0;
@@ -166,6 +171,7 @@ namespace asnet {
     }
 
     void Stream::close() {
+        LOG_INFO << "waiting to close\n";
         setState(State::CLOSING);
     }
 }// end of namespace asnet

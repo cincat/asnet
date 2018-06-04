@@ -5,6 +5,7 @@
 #include <string.h>
 #include <iostream>
 #include <sys/time.h>
+#include <stdlib.h>
 
 namespace asnet {
 
@@ -24,6 +25,8 @@ public:
             case ERROR: ::strcpy(prefix, "[ERROR]: "); break;
             case DEBUG: ::strcpy(prefix, "[DEBUG]: "); break;
         }
+        strcat(prefix, getenv("_"));
+        strcat(prefix, " ");
     }
 
     template <typename T>
@@ -43,7 +46,7 @@ public:
     }
 private:
     // ofstream log_stream_;
-    char prefix[16];
+    char prefix[32];
 };
 
 #define LOG_INFO Log::getLog(INFO)
