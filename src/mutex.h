@@ -25,6 +25,9 @@ public:
     ~Mutex() {
         pthread_mutex_destroy(&mutex_);
     }
+    pthread_mutex_t *getInternalMutex() {
+        return &mutex_;
+    }
 private:
     pthread_mutex_t mutex_;
 };
