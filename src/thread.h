@@ -3,6 +3,8 @@
 
 #include <event_loop.h>
 #include <pthread.h>
+#include <mutex.h>
+#include <condition.h>
 
 namespace asnet {
 
@@ -14,9 +16,14 @@ public:
 
     Thread(Thread &) = delete;
     Thread& operator =(Thread &) = delete;
+    
+    void run();
+    void threadFunc();
 private:
     EventLoop loop_;
     pthread_t thread_;
+    Mutex mutex_;
+    Condition cond_;
 };
 
 }// end of namespace asnet
