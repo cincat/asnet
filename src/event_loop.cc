@@ -190,7 +190,7 @@ namespace asnet {
         }
     }
 
-
+    // fix me : should reset lastactivity member
     void EventLoop::handleTimeoutEvents() {
         for (auto stream : streams_) {
 
