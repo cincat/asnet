@@ -8,13 +8,16 @@
 #include <event_loop.h>
 #include <stream.h>
 #include <log.h>
+#include <service.h>
 
 #include <limits>
 #include <vector>
 
 namespace asnet {
     bool streamComp(Stream *, Stream*);
-    EventLoop::EventLoop(): streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)){
+    EventLoop::EventLoop()
+        : streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)),
+        service_(nullptr) {
         efd_ = ::epoll_create(1);
         // fix me
         if (efd_ < 0) {
@@ -38,15 +41,22 @@ namespace asnet {
             registerStreamEvents();
             // long block_time = stream->getExpiredTimeAsMicroscends();
             handleClosedEvents();
-            if (streams_.size() + stream_buffer_.size() == 0) {
-                break;
-            }
+            // if (streams_.size() + stream_buffer_.size() == 0) {
+            //     break;
+            // }
             handleStreamEvents(getBlockTime());
             
             handleTimeoutEvents();
 
             
         }    
+    }
+
+    void EventLoop::unregistStream(Stream *stream) {
+        epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+        streams_.erase(stream);
+        MutexLock lock(mutex_);
+        stream_buffer_.push_back(stream);
     }
 
     void EventLoop::registerStreamEvents() {
@@ -106,10 +116,12 @@ namespace asnet {
     void EventLoop::handleStreamEvents(long block_time) {
         struct epoll_event event_list[kEventNum];
         int nfds;
-        nfds = epoll_wait(efd_, event_list, kEventNum, block_time);
+        do {
+            nfds = epoll_wait(efd_, event_list, kEventNum, block_time);
+        } while (nfds < 0 && errno == EINTR);
         // fix me: add log information
         if (nfds < 0) {
-            LOG_ERROR << "epoll_wait error happend!\n";
+            LOG_ERROR << "epoll_wait failed: " << strerror(errno) << "\n";
             return ;
         }
 
@@ -146,9 +158,10 @@ namespace asnet {
                         int n = callback(conn);
                         if (n == 0) {
                             stream->close();
-                            streams_.erase(stream);
-                            stream_buffer_.push_back(stream);
-                            epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+                            unregistStream(stream);
+                            // streams_.erase(stream);
+                            // stream_buffer_.push_back(stream);
+                            // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
                         }
                     }
                 }
@@ -167,9 +180,10 @@ namespace asnet {
                         callback(conn);
                     }
                     //
-                    epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
-                    streams_.erase(stream);
-                    stream_buffer_.push_back(stream);
+                    // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+                    // streams_.erase(stream);
+                    // stream_buffer_.push_back(stream);
+                    unregistStream(stream);
                 }
                 else if (stream->getState() == State::CONNECTED) {
                     if (stream->writable()) {
@@ -252,9 +266,13 @@ namespace asnet {
         }
     }
     Stream* EventLoop::newStream(int fd) {
-        Stream *stream = new Stream(fd);
-        stream_buffer_.push_back(stream);
-        return stream;
+        if (service_ == nullptr || service_->getThreadPool()->size() == 0) {
+            Stream *stream = new Stream(fd);
+            MutexLock lock(mutex_);
+            stream_buffer_.push_back(stream);
+            return stream;
+        }
+        return service_->getThreadPool()->newStream();
     }
 
     Stream* EventLoop::newStream() {

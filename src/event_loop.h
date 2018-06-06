@@ -10,8 +10,11 @@
 
 // #include <log.h>
 
+#include <mutex.h>
+
 namespace asnet {
 
+class Service;
 class Stream;
 //bool streamComp(Stream *, Stream *);
 // struct epoll_event;
@@ -27,6 +30,7 @@ public:
     void run() ;
     Stream* newStream();
     Stream* newStream(int fd);
+    void setService(Service *service) {service_ = service;}
 private:
 
     long long getBlockTime();
@@ -34,11 +38,14 @@ private:
     void handleStreamEvents(long);
     void handleClosedEvents();
     void handleTimeoutEvents();
+    void unregistStream(Stream *);
 
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     std::vector<Stream*> stream_buffer_; 
     const static int kEventNum = 1000;
+    Mutex mutex_;
     int efd_;
+    Service *service_;
     // std::vector<struct epoll_event> epoll_event_list_;
 };
 

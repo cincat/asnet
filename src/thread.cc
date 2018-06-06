@@ -29,4 +29,8 @@ namespace asnet {
     EventLoop *Thread::getEventLoop() {
         return &loop_;
     }
+
+    Stream *Thread::newStream() {
+        return loop_.newStream();
+    }
 }

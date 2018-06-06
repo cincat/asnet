@@ -1,5 +1,6 @@
 #include <stream.h>
-#include <event_loop.h>
+// #include <event_loop.h>
+#include <service.h>
 #include <log.h>
 
 #include <unistd.h>
@@ -21,10 +22,11 @@ int onData(asnet::Connection conn) {
 }
 
 int main() {
-    asnet::EventLoop loop;
-    asnet::Stream *client = loop.newStream();
+    // asnet::EventLoop loop;
+    asnet::Service service(2);
+    asnet::Stream *client = service.newStream();
     client->connect("127.0.0.1", 10086);
     client->addCallback(Event::DATA, std::bind(onData, std::placeholders::_1));
-    loop.run();
+    service.start();
     return 0;
 }

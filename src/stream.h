@@ -9,6 +9,7 @@
 
 #include <connection.h>
 #include <log.h>
+#include <mutex.h>
 
 namespace asnet {
 // class Event;
@@ -100,6 +101,7 @@ private:
     char write_buffer_[kBufferLength];
     // char read_buffer_[kBufferLength];
     int write_index_;
+    Mutex mutex_;
     // int read_index_;
     // std::vector<Stream *> associated_streams_;
 };

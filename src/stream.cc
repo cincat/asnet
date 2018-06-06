@@ -27,6 +27,7 @@ namespace asnet {
     // fix me : this is inefficient
     int Stream::write() {
         int n = 0;
+        MutexLock lock(mutex_);
         n = ::write(fd_, write_buffer_, write_index_);
         if (n < 0) {
             return n;
@@ -42,6 +43,7 @@ namespace asnet {
     }
 
     int Stream::write(char *ptr, int len) {
+        MutexLock lock(mutex_);
         if (len + write_index_ >= kBufferLength) {
             return -1;
         }
@@ -72,7 +74,9 @@ namespace asnet {
         local.sin_addr.s_addr = htonl(INADDR_ANY);
         local.sin_port = htons(port);
 
-        int err = 0;
+        int err = 1;
+
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &err, sizeof(int));
         err = ::bind(fd, (struct sockaddr *)&local, sizeof(local));
         if (err < 0) {
             // fix me:

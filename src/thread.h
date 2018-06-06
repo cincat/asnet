@@ -16,9 +16,10 @@ public:
 
     Thread(Thread &) = delete;
     Thread& operator =(Thread &) = delete;
-    
-    void run();
+
+    // void run();
     void threadFunc();
+    Stream *newStream();
 private:
     EventLoop loop_;
     pthread_t thread_;
