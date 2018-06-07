@@ -6,3 +6,4 @@ SET(CMAKE_CXX_FLAGS "-pthread -g -std=c++11")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_subdirectory(examples)
+add_subdirectory(test)
