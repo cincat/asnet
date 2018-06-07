@@ -10,6 +10,8 @@
 #include <connection.h>
 #include <log.h>
 #include <mutex.h>
+#include <buffer.h>
+#include <memory_pool.h>
 
 namespace asnet {
 // class Event;
@@ -41,11 +43,11 @@ public:
     // Stream(): state_(State::CLOSED),
     //     last_activity_(::time(NULL)),
     //     callbacks_(kEventNum){}
-    Stream(int fd): fd_(fd), state_(State::CLOSED),
+    Stream(MemoryPool *pool, int fd): fd_(fd), state_(State::CLOSED),
         // last_activity_(::time(nullptr)),
         callbacks_(kEventNum, nullptr),
-        write_index_(0) {}
-    Stream(): Stream(INVALID_SOCKET_FD) {
+        buffer_(pool){}
+    Stream(MemoryPool *pool): Stream(pool, INVALID_SOCKET_FD) {
         // struct timeval cur_time;
         // ::gettimeofday(&cur_time, nullptr);
         // last_activity_ = cur_time.tv_sec * 1000 + cur_time.tv_usec / 1000;
@@ -71,7 +73,7 @@ public:
     void setFd(int fd) {fd_ = fd;}
     State getState() {return state_;}
     void setState(State state) {state_ = state;}
-    bool writable() {return write_index_ > 0;}
+    bool writable() {return buffer_.hasContent();}
     // friend bool streamComp(Stream *, Stream*);
     bool hasCallbackFor(Event ev) {return callbacks_[ev] != nullptr;}
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
@@ -85,8 +87,8 @@ public:
     long long getLastActivity() {return last_activity_;}
     long long getCurrentTimeAsMicroscends();
     int getExpiredTimeAsMicroscends();
-    int write();
-    int write(char*, int);
+    void write();
+    void write(char*, int);
     void close();
 private:
 
@@ -98,9 +100,10 @@ private:
     // time unit is mcro second which is compatible with epoll
     long long last_activity_;
     int timeout_, tiktok_;
-    char write_buffer_[kBufferLength];
+    // char write_buffer_[kBufferLength];
     // char read_buffer_[kBufferLength];
-    int write_index_;
+    // int write_index_;
+    Buffer buffer_;
     Mutex mutex_;
     // int read_index_;
     // std::vector<Stream *> associated_streams_;

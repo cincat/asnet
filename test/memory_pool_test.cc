@@ -13,5 +13,6 @@ int main() {
         std::cout << ptr << std::endl;
         pool.deallocate(ptr);
     }
+    // char *ptr = pool.allocate(10000000000);
     return 0;
 }

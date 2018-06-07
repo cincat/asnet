@@ -11,6 +11,7 @@
 // #include <log.h>
 
 #include <mutex.h>
+#include <memory_pool.h>
 
 namespace asnet {
 
@@ -45,6 +46,7 @@ private:
     const static int kEventNum = 1000;
     Mutex mutex_;
     int efd_;
+    MemoryPool pool_;
     Service *service_;
     // std::vector<struct epoll_event> epoll_event_list_;
 };

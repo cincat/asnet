@@ -267,7 +267,7 @@ namespace asnet {
     }
     Stream* EventLoop::newStream(int fd) {
         if (service_ == nullptr || service_->getThreadPool()->size() == 0) {
-            Stream *stream = new Stream(fd);
+            Stream *stream = new Stream(&pool_, fd);
             MutexLock lock(mutex_);
             stream_buffer_.push_back(stream);
             return stream;

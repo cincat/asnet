@@ -24,33 +24,36 @@ namespace asnet {
         return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
     }
 
-    // fix me : this is inefficient
-    int Stream::write() {
-        int n = 0;
-        MutexLock lock(mutex_);
-        n = ::write(fd_, write_buffer_, write_index_);
-        if (n < 0) {
-            return n;
-        }
-        LOG_INFO << "successfully write " << n << " bytes on fd " << fd_ << "\n";
-        if (n == write_index_) {
-            write_index_ = 0;
-            memset(write_buffer_, 0, n);
-            return n;
-        }
-        memmove(write_buffer_, write_buffer_ + n, write_index_ - n);
-        return 0;
+    // not thread safe
+    void Stream::write() {
+        // int n = 0;
+        // MutexLock lock(mutex_);
+        // n = ::write(fd_, write_buffer_, write_index_);
+        // if (n < 0) {
+        //     return n;
+        // }
+        // LOG_INFO << "successfully write " << n << " bytes on fd " << fd_ << "\n";
+        // if (n == write_index_) {
+        //     write_index_ = 0;
+        //     memset(write_buffer_, 0, n);
+        //     return n;
+        // }
+        // memmove(write_buffer_, write_buffer_ + n, write_index_ - n);
+        // return 0;
+        buffer_.writeTo(fd_);
     }
 
-    int Stream::write(char *ptr, int len) {
-        MutexLock lock(mutex_);
-        if (len + write_index_ >= kBufferLength) {
-            return -1;
-        }
+    // not thread safe, must do in same thread
+    void Stream::write(char *ptr, int len) {
+        // MutexLock lock(mutex_);
+        // if (len + write_index_ >= kBufferLength) {
+        //     return -1;
+        // }
 
-        ::strncpy(write_buffer_ + write_index_, ptr, len);
-        write_index_ += len;
-        return len;
+        // ::strncpy(write_buffer_ + write_index_, ptr, len);
+        // write_index_ += len;
+        // return len;
+        buffer_.append(ptr, len);
     }
 
     void Stream::addCallback(Event ev, Callback callback) {
