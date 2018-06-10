@@ -17,7 +17,7 @@ int onAccept(asnet::Connection conn) {
 
 int main() {
     // asnet::LOG_INFO << "step into main function\n";
-    asnet::Service service(4);
+    asnet::Service service(2);
     asnet::Stream *server = service.newStream();
     server->listen(10086);
     server->addCallback(asnet::Event::ACCEPT, std::bind(onAccept, std::placeholders::_1));

@@ -9,7 +9,7 @@ namespace asnet {
         t->threadFunc();
         return nullptr;
     }
-    Thread::Thread() :loop_(), mutex_(), cond_(mutex_){
+    Thread::Thread() :loop_(){
         int err = 0;
         err = pthread_create(&thread_, nullptr, startThread, this);
         if (err < 0) {
@@ -18,19 +18,21 @@ namespace asnet {
     }
 
     void Thread::threadFunc() {
-        cond_.wait();
+        // cond_.wait();
         loop_.run();
     }
 
     void Thread::run() {
-        cond_.notify();
+        // cond_.notify();
     }
 
     EventLoop *Thread::getEventLoop() {
         return &loop_;
     }
 
-    Stream *Thread::newStream() {
-        return loop_.newStream();
+    Stream *Thread::newStream(int fd) {
+        Stream *stream = loop_.newInternalStream();
+        stream->setFd(fd);
+        return stream;
     }
 }

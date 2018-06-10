@@ -1,3 +1,5 @@
+#ifndef CONNECTION_H
+#define CONNECTION_H
 
 namespace asnet {
 class Stream;
@@ -12,3 +14,5 @@ private:
     Stream *local_, *remote_;
 };
 }//end of namespace asnet
+
+#endif

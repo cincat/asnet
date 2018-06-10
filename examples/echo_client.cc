@@ -23,7 +23,7 @@ int onData(asnet::Connection conn) {
 
 int main() {
     // asnet::EventLoop loop;
-    asnet::Service service(2);
+    asnet::Service service(1);
     asnet::Stream *client = service.newStream();
     client->connect("127.0.0.1", 10086);
     client->addCallback(Event::DATA, std::bind(onData, std::placeholders::_1));

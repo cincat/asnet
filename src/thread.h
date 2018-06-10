@@ -3,8 +3,6 @@
 
 #include <event_loop.h>
 #include <pthread.h>
-#include <mutex.h>
-#include <condition.h>
 
 namespace asnet {
 
@@ -19,12 +17,10 @@ public:
 
     // void run();
     void threadFunc();
-    Stream *newStream();
+    Stream *newStream(int);
 private:
     EventLoop loop_;
     pthread_t thread_;
-    Mutex mutex_;
-    Condition cond_;
 };
 
 }// end of namespace asnet

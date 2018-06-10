@@ -9,11 +9,11 @@
 
 namespace asnet {
     Buffer::Buffer(MemoryPool *pool) :
-        pool_(pool),
         buffer_(nullptr),
         head_(0),
         tail_(0),
-        length_(0) {}
+        length_(0),
+        pool_(pool) {}
 
     void Buffer::append(char *ptr, int n) {
         ensureCapacity(n);

@@ -32,6 +32,8 @@ enum State{
     LISTENING
 };
 
+class EventLoop;
+
 class Stream {
 public:
     using Callback = std::function<int (const Connection&)>;
@@ -46,7 +48,8 @@ public:
     Stream(MemoryPool *pool, int fd): fd_(fd), state_(State::CLOSED),
         // last_activity_(::time(nullptr)),
         callbacks_(kEventNum, nullptr),
-        buffer_(pool){}
+        buffer_(pool),
+        loop_(nullptr){}
     Stream(MemoryPool *pool): Stream(pool, INVALID_SOCKET_FD) {
         // struct timeval cur_time;
         // ::gettimeofday(&cur_time, nullptr);
@@ -87,6 +90,9 @@ public:
     long long getLastActivity() {return last_activity_;}
     long long getCurrentTimeAsMicroscends();
     int getExpiredTimeAsMicroscends();
+    void setEventLoop(EventLoop *loop) {loop_ = loop;}
+    EventLoop *getEventLoop() {return loop_;}
+    // void setMemoryPool(MemoryPool *pool) {pool_ = pool};
     void write();
     void write(char*, int);
     void close();
@@ -104,7 +110,8 @@ private:
     // char read_buffer_[kBufferLength];
     // int write_index_;
     Buffer buffer_;
-    Mutex mutex_;
+    EventLoop *loop_;
+    // Mutex mutex_;
     // int read_index_;
     // std::vector<Stream *> associated_streams_;
 };

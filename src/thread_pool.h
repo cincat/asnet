@@ -10,7 +10,7 @@ class ThreadPool {
 public:
     ThreadPool(int num);
     ~ThreadPool();
-    Stream* newStream();
+    Stream* newStream(int);
     void start();
     int size() {return num_;}
 private:

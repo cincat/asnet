@@ -11,6 +11,7 @@ namespace asnet {
     ThreadPool::~ThreadPool() {
         for (auto t : threads_) {
             delete t;
+            t = nullptr;
         }
     }
     
@@ -19,8 +20,8 @@ namespace asnet {
             t->run();
         }
     }
-    Stream *ThreadPool::newStream() {
+    Stream *ThreadPool::newStream(int fd) {
         if (threads_.size() == 0) return nullptr;
-        return threads_[(index_++) % threads_.size()]->newStream();
+        return threads_[(index_++) % threads_.size()]->newStream(fd);
     }
 }// end of asnet

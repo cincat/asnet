@@ -3,6 +3,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <sys/eventfd.h>
+// #include <unistd.h>
 // #include <sys/epoll.h>
 
 #include <event_loop.h>
@@ -17,13 +19,26 @@ namespace asnet {
     bool streamComp(Stream *, Stream*);
     EventLoop::EventLoop()
         : streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)),
-        service_(nullptr) {
+        service_(nullptr),
+        pool_() {
         efd_ = ::epoll_create(1);
         // fix me
         if (efd_ < 0) {
             LOG_ERROR << "create event fd failed\n";
             return;
         }
+
+        event_fd_ = ::eventfd(0, EFD_NONBLOCK);
+        struct epoll_event event;
+        event.events = EPOLLIN;
+        event.data.ptr = nullptr;
+        ::epoll_ctl(efd_, EPOLL_CTL_ADD, event_fd_, &event);
+    }
+
+    EventLoop::~EventLoop() {
+        ::epoll_ctl(efd_, EPOLL_CTL_DEL, event_fd_, nullptr);
+        ::close(event_fd_);
+        ::close(efd_);
     }
 
     long long EventLoop::getBlockTime() {
@@ -48,20 +63,22 @@ namespace asnet {
             
             handleTimeoutEvents();
 
-            
+            invokeCallbacks();
         }    
     }
 
     void EventLoop::unregistStream(Stream *stream) {
         epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
         streams_.erase(stream);
-        MutexLock lock(mutex_);
+        // MutexLock lock(mutex_);
         stream_buffer_.push_back(stream);
     }
 
     void EventLoop::registerStreamEvents() {
         int err = 0;
-        for (auto stream : stream_buffer_) {
+        while (stream_buffer_.size() != 0) {
+            auto stream = stream_buffer_.front();
+            stream_buffer_.pop_front();
             if (stream->getState() == State::CONNECTING) {
                 struct epoll_event event;
                 event.events = EPOLLOUT;
@@ -128,7 +145,16 @@ namespace asnet {
         for (int i = 0; i < nfds; i++) {
             Stream *stream = static_cast<Stream *>(event_list[i].data.ptr);
             if (event_list[i].events & EPOLLIN) {
-                if (stream->getState() == State::LISTENING) {
+                if (stream == nullptr) { //event_fd_ poll in
+                    LOG_INFO << "an event happend!\n";
+                    int err = 0;
+                    uint64_t n;
+                    err = ::read(event_fd_, &n, sizeof(uint64_t));
+                    if (err < 0 && errno != EAGAIN) {
+                        LOG_ERROR << "read from event_fd_ failed: " << strerror(errno) << "\n";
+                    }
+                }
+                else if (stream->getState() == State::LISTENING) {
                     // fix me
                     int anofd = accept(stream->getFd(), nullptr, nullptr);
                     if (anofd < 0) {
@@ -145,7 +171,13 @@ namespace asnet {
                         Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
                         // ano_stream->addCallback(Event::ACCEPT, stream->getCallbackFor(Event::ACCEPT));
                         Connection conn(stream, ano_stream);
-                        listener(conn);
+                        // ano_stream->getEventLoop()->appendCallback(std::make_pair(listener, conn));
+                        // listener(conn);
+                        EventLoop *loop = ano_stream->getEventLoop();
+                        if (loop != nullptr) {
+                            LOG_INFO << "get a loop pointer the stream belongs\n";
+                            loop->appendCallback(std::pair<Stream::Callback, Connection>(listener, conn));
+                        }
                     }
                     // stream_buffer_.push_back(ano_stream);
         
@@ -265,14 +297,52 @@ namespace asnet {
             stream = nullptr;
         }
     }
-    Stream* EventLoop::newStream(int fd) {
+
+    void EventLoop::createEvent() {
+        uint64_t n = 1;
+        int err = ::write(event_fd_, &n, sizeof(uint64_t));
+        if (err < 0) {
+            LOG_ERROR << strerror(errno) << "\n";
+        }
+         return ;
+    }
+
+    void EventLoop::appendCallback(std::pair<Stream::Callback, Connection> closure) {
+        callback_buffer_.push_back(closure);
+        createEvent();
+        return ;
+    }
+
+    void EventLoop::invokeCallbacks() {
+        while (callback_buffer_.size() != 0) {
+            std::pair<Stream::Callback, Connection> closure = callback_buffer_.front();
+            callback_buffer_.pop_front();
+            closure.first(closure.second);
+        }
+        return ;
+    }
+
+    Stream *EventLoop::newInternalStream() {
+        Stream *stream = new Stream(&pool_);
+        stream->setEventLoop(this);
+        stream_buffer_.push_back(stream);
+        // createEvent();
+        return stream;
+    }
+
+    Stream *EventLoop::newStream(int fd) {
         if (service_ == nullptr || service_->getThreadPool()->size() == 0) {
-            Stream *stream = new Stream(&pool_, fd);
-            MutexLock lock(mutex_);
-            stream_buffer_.push_back(stream);
+            // Stream *stream = new Stream(&pool_, fd);
+            // stream->setEventLoop(this);
+            // // MutexLock lock(mutex_);
+            // stream_buffer_.push_back(stream);
+            // return stream;
+            // return service_->getThreadPool()->newStream();
+            Stream *stream = newInternalStream();
+            stream->setFd(fd);
             return stream;
         }
-        return service_->getThreadPool()->newStream();
+        return service_->getThreadPool()->newStream(fd);
     }
 
     Stream* EventLoop::newStream() {

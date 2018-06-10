@@ -9,7 +9,7 @@ namespace asnet {
 class Service {
 public:
     Service(int num);
-    Stream* newStream() {return loop_.newStream();}
+    Stream* newStream() {return loop_.newInternalStream();}
     ThreadPool *getThreadPool() {return &threads_;}
     void start();
 private:

@@ -9,7 +9,6 @@
 
 #include <limits>
 
-
 #include <stream.h>
 #include <log.h>
 
@@ -83,7 +82,7 @@ namespace asnet {
         err = ::bind(fd, (struct sockaddr *)&local, sizeof(local));
         if (err < 0) {
             // fix me:
-            LOG_FATAL << "error occurs during bind\n";
+            LOG_FATAL << "error occurs during bind: " << strerror(errno) << "\n";
             return ;
         }
 
@@ -130,7 +129,7 @@ namespace asnet {
             LOG_ERROR << "connect to remote address failed:" << strerror(errno);
         }
 
-        LOG_INFO << "successfully listened on port " << port << "\n";
+        // LOG_INFO << "successfully listened on port " << port << "\n";
         setState(State::CONNECTING);
     }
 
