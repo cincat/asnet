@@ -23,7 +23,14 @@ add_executable(block_queue_test
     ${src_dir}/log.cc
     ${src_dir}/log_stream.cc
     ${src_dir}/fix_buffer.cc)
-add_executable(log_test 
-    log_test.cc ${src_dir}/log.cc 
+add_executable(multithread_log_test 
+    multithread_log_test.cc 
+    ${src_dir}/log.cc 
+    ${src_dir}/log_stream.cc
+    ${src_dir}/fix_buffer.cc)
+
+add_executable(log_test
+    log_test.cc
+    ${src_dir}/log
     ${src_dir}/log_stream.cc
     ${src_dir}/fix_buffer.cc)

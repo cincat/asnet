@@ -29,9 +29,10 @@ private:
     std::deque<FixBuffer *> free_list_;
     pthread_t log_thread_;
 
+    static const int kInterval = 3;
     LogStream();
     LogStream(const std::string &);
-    ~LogStream() {doFlush();}
+    ~LogStream() {flush();}
     
     // std::unique_ptr<FixBuffer> swapBuffer_;
     

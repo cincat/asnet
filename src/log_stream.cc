@@ -43,7 +43,7 @@ void LogStream::doFlush() {
 void LogStream::flush() {
     MutexLock lock(mutex_);
     if (work_list_.empty() == true) {
-        condition_.wait(5);
+        condition_.wait(kInterval);
     }
     doFlush();
 }
