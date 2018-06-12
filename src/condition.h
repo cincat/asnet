@@ -3,6 +3,7 @@
 
 #include <mutex.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 namespace asnet {
 
@@ -18,6 +19,17 @@ public:
         pthread_cond_wait(&cond_, mutex_.getInternalMutex());
     }
 
+    // wait at most t seconds
+    void wait(int t) {
+        struct timeval tval;
+        gettimeofday(&tval, nullptr);
+        struct timespec tspec;
+        tspec.tv_sec = tval.tv_sec;
+        tspec.tv_nsec = tval.tv_usec * 1000;
+        tspec.tv_sec += t;
+        pthread_cond_timedwait(&cond_, mutex_.getInternalMutex(), &tspec);
+    }
+    
     void notify() {
         pthread_cond_signal(&cond_);
     }

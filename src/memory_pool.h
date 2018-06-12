@@ -21,6 +21,7 @@ struct MemoryBlock {
 class MemoryPool {
 
 public:
+    MemoryPool(int);
     MemoryPool();
     ~MemoryPool();
 

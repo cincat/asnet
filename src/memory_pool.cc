@@ -7,10 +7,11 @@
 
 namespace asnet {
 
-    MemoryPool::MemoryPool() : unit_(65536){
+    MemoryPool::MemoryPool(int block_size) : unit_(block_size){
         // work_list_.push_back(std::move());
     }
 
+    MemoryPool::MemoryPool() : MemoryPool(65536) {}
     void MemoryPool::allocateNewBlock(int n) {
         if (n > unit_/4) {
             work_list_.push_back(MemoryBlock());

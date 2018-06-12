@@ -82,7 +82,7 @@ namespace asnet {
         err = ::bind(fd, (struct sockaddr *)&local, sizeof(local));
         if (err < 0) {
             // fix me:
-            LOG_FATAL << "error occurs during bind: " << strerror(errno) << "\n";
+            LOG_ERROR << "error occurs during bind: " << strerror(errno) << "\n";
             return ;
         }
 

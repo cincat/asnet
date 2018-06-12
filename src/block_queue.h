@@ -57,6 +57,10 @@ public:
         MutexLock lock(mutex_);
         return queue_.back();
     }
+
+    Mutex &getMutex() {
+        return mutex_;
+    }
     // typename std::deque<T>::iterator begin() {
     //     return queue_.begin();
     // }

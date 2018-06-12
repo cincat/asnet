@@ -2,7 +2,7 @@
 #define MUTEX_H
 
 #include <pthread.h>
-#include <log.h>
+// #include <log.h>
 
 #include <errno.h>
 
@@ -13,7 +13,7 @@ public:
         int err = 0;
         err = pthread_mutex_init(&mutex_, nullptr);
         if (err < 0) {
-            LOG_ERROR << strerror(errno) << "\n";
+            // LOG_ERROR << strerror(errno) << "\n";
         }
     }
     void lock() {

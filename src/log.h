@@ -3,56 +3,64 @@
 
 
 #include <string.h>
-#include <iostream>
 #include <sys/time.h>
 #include <stdlib.h>
+
+#include <iostream>
+#include <string>
+
+#include <log_stream.h>
 
 namespace asnet {
 
 enum LOG_LEVEL{
     INFO,
-    ERROR,
-    DEBUG,
-    FATAL
+    ERROR
+    // DEBUG,
+    // FATAL
 };
 
 class Log {
 
 public:
-    Log(LOG_LEVEL level) {
-        switch(level) {
-            case INFO: ::strcpy(prefix, "[INFO]: "); break;
-            case ERROR: ::strcpy(prefix, "[ERROR]: "); break;
-            case DEBUG: ::strcpy(prefix, "[DEBUG]: "); break;
-        }
-        strcat(prefix, getenv("_"));
-        strcat(prefix, " ");
-    }
-
+    Log(LOG_LEVEL);
+    
     template <typename T>
-    std::ostream& operator <<(const T &s) {
-        // struct timeval val;
-        // gettimeofday(&val, nullptr);
-        std::cerr << prefix << s;
-        if (::strlen(prefix) > 1) {
-            ::memset(prefix, 0, sizeof(prefix));
-            // prefix[0] = ' ';
-        }
-        return std::cerr;
+    Log &operator<<(T n) {
+        item_.append(std::to_string(n));
+        return *this;
     }
 
-    static Log getLog(LOG_LEVEL level) {
-        return Log(level);
+    Log &operator<<(const char *s) {
+        item_.append(std::string(s));
+        return *this;
     }
+
+    Log &operator<<(char *s) {
+        item_.append(std::string(s));
+        return *this;
+    }
+    Log &operator<<(const std::string &s) {
+        item_.append(s);
+        return *this;
+    }
+    ~Log() {
+        log_stream_singleton_.getInstance().append(item_);
+    }
+    // static Log getLog(LOG_LEVEL level) {
+    //     return Log(level);
+    // }
 private:
     // ofstream log_stream_;
-    char prefix[32];
+    // char prefix[64];
+    std::string item_;
+    LogStreamSingleton log_stream_singleton_;
 };
 
-#define LOG_INFO Log::getLog(INFO)
-#define LOG_ERROR Log::getLog(ERROR)
-#define LOG_FATAL Log::getLog(FATAL)
-#define LOG_DEBUG Log::getLog(DEBUG)
+#define LOG_INFO Log(INFO)
+#define LOG_ERROR Log(ERROR)
+// #define LOG_FATAL Log(FATAL)
+// #define LOG_DEBUG Log(DEBUG)
 
 } //end of namespace asent
 

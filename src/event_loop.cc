@@ -158,10 +158,10 @@ namespace asnet {
                     // fix me
                     int anofd = accept(stream->getFd(), nullptr, nullptr);
                     if (anofd < 0) {
-                        LOG_ERROR << strerror(errno) << std::endl;
+                        LOG_ERROR << strerror(errno) << "\n";
                         return ;
                     }
-                    LOG_INFO << "successfully accepted a new fd " << anofd << std::endl;
+                    LOG_INFO << "successfully accepted a new fd " << anofd << "\n";
                     Stream *ano_stream = newStream(anofd);
                     ano_stream->setState(State::CONNECTED);
                     // fix me : should add associated streamscd 
