@@ -55,11 +55,12 @@ namespace asnet {
         while (true) {
             registerStreamEvents();
             // long block_time = stream->getExpiredTimeAsMicroscends();
-            handleClosedEvents();
-            // if (streams_.size() + stream_buffer_.size() == 0) {
-            //     break;
-            // }
             handleStreamEvents(getBlockTime());
+
+            handleClosedEvents();
+            if (streams_.size() + stream_buffer_.size() == 0) {
+                break;
+            }
             
             handleTimeoutEvents();
 
@@ -67,6 +68,11 @@ namespace asnet {
         }    
     }
 
+    // void EventLoop::stop() {
+    //     quit_ = true;
+    //     createEvent();
+
+    // }
     void EventLoop::unregistStream(Stream *stream) {
         epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
         streams_.erase(stream);
@@ -127,7 +133,7 @@ namespace asnet {
             
             streams_.insert(stream);
         }
-        stream_buffer_.clear();
+        // stream_buffer_.clear();
     }
 
     void EventLoop::handleStreamEvents(long block_time) {
@@ -144,17 +150,19 @@ namespace asnet {
 
         for (int i = 0; i < nfds; i++) {
             Stream *stream = static_cast<Stream *>(event_list[i].data.ptr);
-            if (event_list[i].events & EPOLLIN) {
-                if (stream == nullptr) { //event_fd_ poll in
-                    LOG_INFO << "an event happend!\n";
-                    int err = 0;
-                    uint64_t n;
-                    err = ::read(event_fd_, &n, sizeof(uint64_t));
-                    if (err < 0 && errno != EAGAIN) {
-                        LOG_ERROR << "read from event_fd_ failed: " << strerror(errno) << "\n";
-                    }
+            if (stream == nullptr) { //event_fd_ poll in
+                LOG_INFO << "an event happend!\n";
+                int err = 0;
+                uint64_t n;
+                err = ::read(event_fd_, &n, sizeof(uint64_t));
+                if (err < 0 && errno != EAGAIN) {
+                    LOG_ERROR << "read from event_fd_ failed: " << strerror(errno) << "\n";
                 }
-                else if (stream->getState() == State::LISTENING) {
+                continue ;
+            }
+            if (event_list[i].events & EPOLLIN) {
+                
+                if (stream->getState() == State::LISTENING) {
                     // fix me
                     int anofd = accept(stream->getFd(), nullptr, nullptr);
                     if (anofd < 0) {
@@ -305,15 +313,16 @@ namespace asnet {
         // }
     }
     void EventLoop::handleClosedEvents() {
-        std::vector<Stream*> buffer_;
+        std::vector<Stream*> buffer;
         for (auto stream : streams_) {
-            if (stream->getState() == State::CLOSED) {
+            if (stream->getState() == State::CLOSED 
+                || (stream->getState() == State::CLOSING && stream->writable() == false)) {
                 LOG_INFO << "found a closed tag\n";
-                buffer_.push_back(stream);
+                buffer.push_back(stream);
             }
         }
         // LOG_INFO << "buffer_ size is " << buffer_.size() << "\n";
-        for (auto stream : buffer_) {
+        for (auto stream : buffer) {
             LOG_INFO << "handling closed events\n";
             streams_.erase(stream);
             epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
@@ -352,6 +361,7 @@ namespace asnet {
         stream->setEventLoop(this);
         stream_buffer_.push_back(stream);
         // createEvent();
+        // createEvent(); // in case in sleep state
         return stream;
     }
 

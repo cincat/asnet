@@ -57,7 +57,8 @@ LogStream::LogStream() :
     primeBuffer_(new FixBuffer()){
         // log_thread_ = pthread_create()
         int err = ::pthread_create(&log_thread_, nullptr, threadFunc, this);
-        fd_ = ::creat((std::string("log_") + __progname + ".txt").data(), O_CREAT | O_RDWR);
+        // fd_ = ::creat((std::string("log_") + __progname + ".txt").data(), O_CREAT | O_RDWR);
+        fd_ = STDERR_FILENO;
 }
 
 

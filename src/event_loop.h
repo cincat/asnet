@@ -32,7 +32,8 @@ public:
     EventLoop(const EventLoop &) = delete;
     EventLoop& operator=(const EventLoop &) = delete;
 
-    void run() ;
+    void run();
+    void stop();
     Stream *newStream();
     Stream *newStream(int fd);
     Stream *newInternalStream();
@@ -60,6 +61,7 @@ private:
     int event_fd_;
     Service *service_;
     MemoryPool pool_;
+    // bool quit_;
     // std::vector<struct epoll_event> epoll_event_list_;
 };
 

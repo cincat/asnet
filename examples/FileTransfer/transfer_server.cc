@@ -11,24 +11,38 @@
 
 char *filePath = nullptr;
 
-int onAccept(asnet::Stream *s) {
+void onAccept(asnet::Stream *s) {
     int fd = 0;
     if (filePath != nullptr) {
         fd = ::open(filePath, O_RDONLY);
     }
 
     if (fd == -1) {
-        return -1;
+        return ;
     }
 
     const int N = 1024;
     char buffer[N];
-    while(true) {
-        int n = read(fd, buffer, N);
-        if (n == 0) break;
-        s->write(buffer, n);
+    int n = read(fd, buffer, N);
+    if (n == 0) {
+        s->close();
+        return ;
     }
-    s->close();
+    s->write(buffer, n);
+    s->setContex((void*)fd);
+}
+
+void onWriteComplete(asnet::Stream *s) {
+    int fd = *(int*)s->getContex();
+    const int N = 1024;
+    char buffer[N];
+    int n = read(fd, buffer, N);
+    if (n <= 0) {
+        s->close();
+        close(fd);
+        return ;
+    }
+    s->write(buffer, n);
 }
 
 int main(int argc, char *args[]) {
@@ -41,6 +55,7 @@ int main(int argc, char *args[]) {
     asnet::Stream *server = service.newStream();
     server->listen(2018);
     server->addCallback(asnet::Event::ACCEPT, std::bind(onAccept, std::placeholders::_1));
+    server->addCallback(asnet::Event::WRITE_COMPLETE, std::bind(onWriteComplete, std::placeholders::_1));
     service.start();
     return 0;
 }

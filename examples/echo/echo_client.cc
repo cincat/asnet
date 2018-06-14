@@ -18,6 +18,7 @@ void onData(asnet::Stream *s) {
     // }
     LOG_INFO << "has successfully read " << n << " bytes \n";
     ::write(STDOUT_FILENO, buffer, n);
+    s->close();
     // conn.getLocal()->close();
     return ;
 }

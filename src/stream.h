@@ -49,7 +49,8 @@ public:
         callbacks_(kEventNum, nullptr),
         out_buffer_(pool),
         in_buffer_(pool),
-        loop_(nullptr){}
+        loop_(nullptr),
+        contex_(nullptr){}
     Stream(MemoryPool *pool): Stream(pool, INVALID_SOCKET_FD) {
         // struct timeval cur_time;
         // ::gettimeofday(&cur_time, nullptr);
@@ -100,6 +101,9 @@ public:
     void read();
     bool readable() {return in_buffer_.hasContent();}
     void close();
+
+    void setContex(void *p) {contex_ = p;}
+    void *getContex() {return contex_;}
 private:
 
     const static int kBufferLength = 1024;
@@ -116,6 +120,7 @@ private:
     Buffer out_buffer_;
     Buffer in_buffer_;
     EventLoop *loop_;
+    void *contex_;
     // Mutex mutex_;
     // int read_index_;
     // std::vector<Stream *> associated_streams_;

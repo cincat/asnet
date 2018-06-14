@@ -15,6 +15,9 @@ void onData(asnet::Stream *s) {
         int n = s->read(buffer, N);
         write(fd, buffer, n);
     }
+    close (fd);
+    s->close();
+    // s->close();
 }
 
 int main() {
