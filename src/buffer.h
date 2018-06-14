@@ -14,12 +14,13 @@ public:
     Buffer &operator=(const Buffer &) = delete;
 
     void append(char *, int);
+    int subtract(char *, int);
     void writeTo(int);
     bool hasContent();
     void readFrom(int);
-
+    int size();
 private:
-
+    // static const int kLENGTH = 64*1024;
     void ensureCapacity(int);
 
     char *buffer_;

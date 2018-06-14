@@ -8,17 +8,18 @@
 
 using namespace asnet;
 
-int onData(asnet::Connection conn) {
+void onData(asnet::Stream *s) {
     char buffer[16] = {'\0'};
-    int n = ::read(conn.getLocal()->getFd(), buffer, 16);
+    int n = s->read(buffer, 16);
+    // int n = ::read(s->getFd(), buffer, 16);
     // if (n == 0) {
     //     conn.getLocal()->close();
     //     return 0;
     // }
     LOG_INFO << "has successfully read " << n << " bytes \n";
-    ::write(STDOUT_FILENO, buffer, strlen(buffer));
+    ::write(STDOUT_FILENO, buffer, n);
     // conn.getLocal()->close();
-    return n;
+    return ;
 }
 
 int main() {

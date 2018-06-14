@@ -2,6 +2,7 @@
 #define LOG_STREAM_H
 
 #include <pthread.h>
+#include <unistd.h>
 
 #include <string>
 #include <memory>
@@ -13,6 +14,8 @@
 #include <condition.h>
 
 namespace asnet {
+
+// extern char *__progname;
 
 class LogStream {
 public:
@@ -32,7 +35,10 @@ private:
     static const int kInterval = 3;
     LogStream();
     LogStream(const std::string &);
-    ~LogStream() {flush();}
+    ~LogStream() {
+        flush();
+        close(fd_);
+    }
     
     // std::unique_ptr<FixBuffer> swapBuffer_;
     
@@ -41,6 +47,7 @@ private:
 class LogStreamSingleton {
 public:
     LogStream &getInstance() {
+        // static LogStream stream(std::string("log_") + __progname + ".txt");
         static LogStream stream;
         return stream;
     }

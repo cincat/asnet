@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+extern char *__progname;
+
 namespace asnet {
 
 void *threadFunc(void *p) {
@@ -49,20 +51,25 @@ void LogStream::flush() {
 }
 
 LogStream::LogStream() :
-    fd_(STDERR_FILENO), 
+    // fd_(STDERR_FILENO), 
     mutex_(),
     condition_(mutex_),
     primeBuffer_(new FixBuffer()){
         // log_thread_ = pthread_create()
         int err = ::pthread_create(&log_thread_, nullptr, threadFunc, this);
+        fd_ = ::creat((std::string("log_") + __progname + ".txt").data(), O_CREAT | O_RDWR);
 }
 
 
-LogStream::LogStream(const std::string &s) : LogStream(){
-    fd_ = open(s.data(), O_APPEND | O_CREAT);
+LogStream::LogStream(const std::string &s) : 
+    mutex_(),
+    condition_(mutex_),
+    primeBuffer_(new FixBuffer()){
+    fd_ = open(s.data(), O_CREAT);
     if (fd_ < 0) {
         // error checking
     }
+    int err = ::pthread_create(&log_thread_, nullptr, threadFunc, this);
 }
 
 void LogStream::append(const std::string &s) {

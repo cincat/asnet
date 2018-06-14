@@ -7,12 +7,12 @@
 #include <unistd.h>
 
 // using namespace asnet;
-int onAccept(asnet::Connection conn) {
+void onAccept(asnet::Stream *s) {
     char buffer[16] = "hello, world\n";
-    conn.getRemote()->write(buffer, ::strlen(buffer));
+    s->write(buffer, ::strlen(buffer));
     // conn.getRemote()->write("", 0);
-    conn.getRemote()->close();
-    return strlen(buffer);
+    s->close();
+    return ;
 }
 
 int main() {

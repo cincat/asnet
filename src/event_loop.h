@@ -37,7 +37,7 @@ public:
     Stream *newStream(int fd);
     Stream *newInternalStream();
     void setService(Service *service) {service_ = service;}
-    void appendCallback(std::pair<Stream::Callback, Connection>);
+    void appendCallback(std::pair<Stream::Callback, Stream *>);
 private:
 
     void createEvent();
@@ -52,7 +52,8 @@ private:
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;
     // std::vector<Stream*> stream_buffer_; 
     BlockQueue<Stream *> stream_buffer_;
-    BlockQueue<std::pair<Stream::Callback, Connection>> callback_buffer_;
+    BlockQueue<std::pair<Stream::Callback, Stream *>> callback_buffer_;
+    // BlockQueue<Stream::Callback> callback_buffer_;
     const static int kEventNum = 1000;
     Mutex mutex_;
     int efd_;

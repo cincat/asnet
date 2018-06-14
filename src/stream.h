@@ -19,6 +19,8 @@ namespace asnet {
 enum Event{
     DATA,
     ACCEPT,
+    WRITE_COMPLETE,
+    // READ_COMPLETE,
     CONNECT,
     TIMEOUT,
     TICTOK
@@ -36,11 +38,8 @@ class EventLoop;
 
 class Stream {
 public:
-    using Callback = std::function<int (const Connection&)>;
+    using Callback = std::function<void (Stream *)>;
     const static int INVALID_SOCKET_FD = -1;
-
-
-
 
     // Stream(): state_(State::CLOSED),
     //     last_activity_(::time(NULL)),
@@ -48,7 +47,8 @@ public:
     Stream(MemoryPool *pool, int fd): fd_(fd), state_(State::CLOSED),
         // last_activity_(::time(nullptr)),
         callbacks_(kEventNum, nullptr),
-        buffer_(pool),
+        out_buffer_(pool),
+        in_buffer_(pool),
         loop_(nullptr){}
     Stream(MemoryPool *pool): Stream(pool, INVALID_SOCKET_FD) {
         // struct timeval cur_time;
@@ -76,7 +76,7 @@ public:
     void setFd(int fd) {fd_ = fd;}
     State getState() {return state_;}
     void setState(State state) {state_ = state;}
-    bool writable() {return buffer_.hasContent();}
+    
     // friend bool streamComp(Stream *, Stream*);
     bool hasCallbackFor(Event ev) {return callbacks_[ev] != nullptr;}
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
@@ -95,11 +95,15 @@ public:
     // void setMemoryPool(MemoryPool *pool) {pool_ = pool};
     void write();
     void write(char*, int);
+    bool writable() {return out_buffer_.hasContent();}
+    int read(char *, int);
+    void read();
+    bool readable() {return in_buffer_.hasContent();}
     void close();
 private:
 
     const static int kBufferLength = 1024;
-    const static int kEventNum = 6;
+    const static int kEventNum = 8;
     std::vector<Callback> callbacks_;
     int fd_;
     State state_;
@@ -109,7 +113,8 @@ private:
     // char write_buffer_[kBufferLength];
     // char read_buffer_[kBufferLength];
     // int write_index_;
-    Buffer buffer_;
+    Buffer out_buffer_;
+    Buffer in_buffer_;
     EventLoop *loop_;
     // Mutex mutex_;
     // int read_index_;

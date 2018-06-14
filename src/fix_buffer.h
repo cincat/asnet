@@ -8,6 +8,7 @@ namespace asnet {
 class FixBuffer {
 public:
     FixBuffer();
+    // FixBuffer(int);
     void append(const std::string &);
     void writeTo(int);
     bool hasNothing();

@@ -22,6 +22,21 @@ namespace asnet {
         return ;
     }
 
+    int Buffer::subtract(char *ptr, int n) {
+        int len = std::min(n, size());
+        memcpy(ptr, buffer_ + head_, len);
+        head_ += len;
+        if (head_ == tail_) {
+            pool_->deallocate(buffer_);
+            buffer_ = nullptr;
+        }
+        return len;
+    }
+
+    int Buffer::size() {
+        return tail_ - head_;
+    }
+
     bool Buffer::hasContent() {
         return tail_ > head_;
     }
@@ -29,18 +44,24 @@ namespace asnet {
     void Buffer::writeTo(int fd) {
         int n = ::write(fd, buffer_ + head_, tail_ - head_);
         if (n < 0) {
-            LOG_ERROR << strerror(errno) << "\n";
+            LOG_ERROR << "Buffer::writeTo error occured: " << strerror(errno) << "\n";
         }
         else {
             head_ += n;
             if (head_ == tail_) {
-                head_ = tail_ = 0;
+                // head_ = tail_ = 0;
+                pool_->deallocate(buffer_);
+                buffer_ = nullptr;
             }
         }
     }
 
     void Buffer::readFrom(int fd) {
-        
+        const int N = 1024;
+        ensureCapacity(N);
+        int n = ::read(fd, buffer_ + tail_, N);
+        tail_ += n;
+        return ;
     }
 
     void Buffer::ensureCapacity(int n) {

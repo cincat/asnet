@@ -39,7 +39,7 @@ namespace asnet {
         // }
         // memmove(write_buffer_, write_buffer_ + n, write_index_ - n);
         // return 0;
-        buffer_.writeTo(fd_);
+        out_buffer_.writeTo(fd_);
     }
 
     // not thread safe, must do in same thread
@@ -52,7 +52,15 @@ namespace asnet {
         // ::strncpy(write_buffer_ + write_index_, ptr, len);
         // write_index_ += len;
         // return len;
-        buffer_.append(ptr, len);
+        out_buffer_.append(ptr, len);
+    }
+
+    void Stream::read() {
+        in_buffer_.readFrom(fd_);
+    }
+
+    int Stream::read(char *buffer, int len) {
+        return in_buffer_.subtract(buffer, len);
     }
 
     void Stream::addCallback(Event ev, Callback callback) {
