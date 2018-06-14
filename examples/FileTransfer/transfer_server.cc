@@ -33,7 +33,9 @@ void onAccept(asnet::Stream *s) {
 }
 
 void onWriteComplete(asnet::Stream *s) {
-    int fd = *(int*)s->getContex();
+    void *contex = s->getContex();
+    int fd = *(int *)&contex;
+    // LOG_INFO << fd << "\n";
     const int N = 1024;
     char buffer[N];
     int n = read(fd, buffer, N);

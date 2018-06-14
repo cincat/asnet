@@ -56,9 +56,9 @@ private:
     std::string item_;
     LogStreamSingleton log_stream_singleton_;
 };
+#define LOG_INFO asnet::Log(INFO)
+#define LOG_ERROR asnet::Log(ERROR)
 
-#define LOG_INFO Log(INFO)
-#define LOG_ERROR Log(ERROR)
 // #define LOG_FATAL Log(FATAL)
 // #define LOG_DEBUG Log(DEBUG)
 

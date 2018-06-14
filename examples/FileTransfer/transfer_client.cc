@@ -6,18 +6,44 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+// void onData(asnet::Stream *s) {
+//     const int N = 1024;
+//     char buffer[N] = {0};
+//     char *pathName = "received_file";
+//     int fd = open(pathName, O_CREAT | O_RDWR);
+//     while (s->readable()) {
+//         int n = s->read(buffer, N);
+//         write(fd, buffer, n);
+//     }
+//     close (fd);
+//     s->close();
+//     // s->close();
+// }
+
 void onData(asnet::Stream *s) {
-    const int N = 1024;
-    char buffer[N] = {0};
-    char *pathName = "received_file";
-    int fd = open(pathName, O_CREAT | O_RDWR);
+    int fd;
+    if (s->getContex() == nullptr) {
+        char *pathName = "received_file";
+        fd = open(pathName, O_CREAT | O_RDWR);
+        s->setContex((void*)fd);
+    }
+    else {
+        void *contex = s->getContex();
+        fd = *(int *)&contex;
+    }
+
+    if (s->readable() == false) {
+        // read zero bytes indicate peer closed the connection
+        s->close();
+        close(fd);
+        return ;
+    }
     while (s->readable()) {
+        const int N = 1024;
+        char buffer[N] = {0};
         int n = s->read(buffer, N);
         write(fd, buffer, n);
     }
-    close (fd);
-    s->close();
-    // s->close();
 }
 
 int main() {

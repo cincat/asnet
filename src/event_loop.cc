@@ -185,7 +185,7 @@ namespace asnet {
                         LOG_INFO << "stream has register a accept listener" << "\n";
                         Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
                         // ano_stream->addCallback(Event::ACCEPT, stream->getCallbackFor(Event::ACCEPT));
-                        Connection conn(stream, ano_stream);
+                        // Connection conn(stream, ano_stream);
                         // ano_stream->getEventLoop()->appendCallback(std::make_pair(listener, conn));
                         // listener(conn);
                         EventLoop *loop = ano_stream->getEventLoop();
@@ -235,13 +235,13 @@ namespace asnet {
                         // Connection conn(stream, nullptr);
                         // callback(conn);
                         callback(stream);
-                        if (stream->writable() == false) {
-                            // write complete!
-                            if (stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
-                                Stream::Callback callback = stream->getCallbackFor(Event::WRITE_COMPLETE);
-                                callback(stream);
-                            }
-                        }
+                        // if (stream->writable() == false) {
+                        //     // write complete!
+                        //     if (stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
+                        //         Stream::Callback callback = stream->getCallbackFor(Event::WRITE_COMPLETE);
+                        //         callback(stream);
+                        //     }
+                        // }
                     }
                     //
                     // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
@@ -252,11 +252,18 @@ namespace asnet {
                 else if (stream->getState() == State::CONNECTED) {
                     if (stream->writable()) {
                         stream->write();
+                        if (stream->writable() == false && stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
+                            stream->getCallbackFor(Event::WRITE_COMPLETE)(stream);
+                        }
                     }
+                    
                 }
                 else if (stream->getState() == State::CLOSING) {
                     if (stream->writable()) {
                         stream->write();
+                        if (stream->writable() == false && stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
+                            stream->getCallbackFor(Event::WRITE_COMPLETE)(stream);
+                        }
                     }
                     // nothin left in the write buffer
                     if (stream->writable() == false) {
