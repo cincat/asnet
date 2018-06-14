@@ -42,12 +42,13 @@ namespace asnet {
                 LOG_INFO << "MemoryPool has allocated a new 64k block\n";
             }
             else {
-                auto block = free_list_.back();
+                auto block = free_list_.front();
+                free_list_.pop_front();
                 block.ptr = block.head;
                 block.unused = unit_;
                 block.refund = unit_;
                 work_list_.push_back(block);
-                free_list_.pop_back();
+               
                 LOG_INFO << "MemoryPool has transfer a new block from free section\n";
             }
         }
@@ -59,7 +60,7 @@ namespace asnet {
         if (work_list_.empty() || work_list_.back().unused < n){
             if (work_list_.empty() == false) {
                 auto &t = work_list_.back();
-                t.refund = t.ptr - t.head;
+                t.refund -= (t.length - (t.ptr - t.head));
             }
             allocateNewBlock(n);
             MemoryBlock &block = work_list_.back();
