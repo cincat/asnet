@@ -164,7 +164,14 @@ namespace asnet {
                     LOG_INFO << "successfully accepted a new fd " << anofd << "\n";
                     Stream *ano_stream = newStream(anofd);
                     ano_stream->setState(State::CONNECTED);
-                    // fix me : should add associated streamscd 
+                    // fix me further should add time callbacks
+                    if (stream->hasCallbackFor(Event::DATA)) {
+                        ano_stream->addCallback(Event::DATA, stream->getCallbackFor(Event::DATA));
+                    }
+
+                    if (stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
+                        ano_stream->addCallback(Event::WRITE_COMPLETE, stream->getCallbackFor(Event::WRITE_COMPLETE));
+                    }
 
                     if (stream->hasCallbackFor(Event::ACCEPT)) {
                         LOG_INFO << "stream has register a accept listener" << "\n";
@@ -220,6 +227,13 @@ namespace asnet {
                         // Connection conn(stream, nullptr);
                         // callback(conn);
                         callback(stream);
+                        if (stream->writable() == false) {
+                            // write complete!
+                            if (stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
+                                Stream::Callback callback = stream->getCallbackFor(Event::WRITE_COMPLETE);
+                                callback(stream);
+                            }
+                        }
                     }
                     //
                     // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
