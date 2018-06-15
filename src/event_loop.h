@@ -14,7 +14,6 @@
 #include <memory_pool.h>
 #include <block_queue.h>
 #include <stream.h>
-#include <connection.h>
 
 namespace asnet {
 

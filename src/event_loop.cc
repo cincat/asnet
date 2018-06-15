@@ -181,6 +181,10 @@ namespace asnet {
                         ano_stream->addCallback(Event::WRITE_COMPLETE, stream->getCallbackFor(Event::WRITE_COMPLETE));
                     }
 
+                    if (stream->hasCallbackFor(Event::CLOSE)) {
+                        ano_stream->addCallback(Event::CLOSE, stream->getCallbackFor(Event::CLOSE));
+                    }
+
                     if (stream->hasCallbackFor(Event::ACCEPT)) {
                         LOG_INFO << "stream has register a accept listener" << "\n";
                         Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
@@ -203,6 +207,10 @@ namespace asnet {
                     stream->read();
                     if (stream->readable() == false) {
                         stream->close();
+                        if (stream->hasCallbackFor(Event::CLOSE)) {
+                            stream->getCallbackFor(Event::CLOSE)(stream);
+                        }
+                        continue ;
                     }
                     if (stream->hasCallbackFor(Event::DATA)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::DATA);

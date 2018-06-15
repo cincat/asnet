@@ -1,7 +1,6 @@
 
 #include <service.h>
 #include <stream.h>
-#include <connection.h>
 
 #include <iostream>
 

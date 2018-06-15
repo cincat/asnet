@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include <connection.h>
 #include <log.h>
 #include <mutex.h>
 #include <buffer.h>
@@ -20,7 +19,7 @@ enum Event{
     DATA,
     ACCEPT,
     WRITE_COMPLETE,
-    // READ_COMPLETE,
+    CLOSE,
     CONNECT,
     TIMEOUT,
     TICTOK
