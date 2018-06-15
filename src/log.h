@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <iostream>
 #include <string>
@@ -56,12 +57,14 @@ private:
     std::string item_;
     LogStreamSingleton log_stream_singleton_;
 };
-#define LOG_INFO asnet::Log(INFO)
-#define LOG_ERROR asnet::Log(ERROR)
+#define LOG_INFO asnet::Log(asnet::LOG_LEVEL::INFO)
+#define LOG_ERROR asnet::Log(asnet::LOG_LEVEL::ERROR)
 
 // #define LOG_FATAL Log(FATAL)
 // #define LOG_DEBUG Log(DEBUG)
 
 } //end of namespace asent
 
+// #define LOG_INFO asnet::Log(asnet::LOG_LEVEL::INFO)
+// #define LOG_ERROR asnet::Log(asnet::LOG_LEVEL::ERROR)
 #endif

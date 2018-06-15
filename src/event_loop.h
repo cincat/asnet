@@ -37,6 +37,7 @@ public:
     Stream *newStream(int fd);
     Stream *newInternalStream();
     void setService(Service *service) {service_ = service;}
+    void setRepeat() {repeat_ = true;}
     void appendCallback(std::pair<Stream::Callback, Stream *>);
 private:
 
@@ -60,7 +61,7 @@ private:
     int event_fd_;
     Service *service_;
     MemoryPool pool_;
-    // bool quit_;
+    bool repeat_;// repeat is only set when loop is in a thread, in case thread exit
     // std::vector<struct epoll_event> epoll_event_list_;
 };
 

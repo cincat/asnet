@@ -20,7 +20,8 @@ namespace asnet {
     EventLoop::EventLoop()
         : streams_(std::bind(streamComp, std::placeholders::_1, std::placeholders::_2)),
         service_(nullptr),
-        pool_() {
+        pool_(),
+        repeat_(false){
         efd_ = ::epoll_create(1);
         // fix me
         if (efd_ < 0) {
@@ -59,7 +60,7 @@ namespace asnet {
 
             handleClosedEvents();
             if (streams_.size() + stream_buffer_.size() == 0) {
-                break;
+                if (repeat_ == false) break;
             }
             
             handleTimeoutEvents();

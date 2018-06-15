@@ -11,6 +11,7 @@ namespace asnet {
     }
     Thread::Thread() :loop_(){
         int err = 0;
+        loop_.setRepeat();
         err = pthread_create(&thread_, nullptr, startThread, this);
         if (err < 0) {
             LOG_ERROR << strerror(errno) << "\n";

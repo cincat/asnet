@@ -1,5 +1,6 @@
 #include <service.h>
 #include <stream.h>
+#include <log.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -48,7 +49,10 @@ void onData(asnet::Stream *s) {
 void onClose(asnet::Stream *s) {
     void *contex = s->getContex();
     int fd = *(int*)&contex;
-    close(fd);
+    int err = close(fd);
+    if (err < 0) {
+        LOG_ERROR << strerror(errno) << "\n";
+    }
 } 
 
 int main() {
