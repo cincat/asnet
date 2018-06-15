@@ -61,6 +61,10 @@ namespace asnet {
             if (work_list_.empty() == false) {
                 auto &t = work_list_.back();
                 t.refund -= (t.length - (t.ptr - t.head));
+                if (t.refund == 0) {
+                    free_list_.push_back(work_list_.back());
+                    work_list_.pop_back();
+                }
             }
             allocateNewBlock(n);
             MemoryBlock &block = work_list_.back();
