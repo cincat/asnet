@@ -11,16 +11,17 @@
 
 #include <stream.h>
 #include <log.h>
+#include <event_loop.h>
 
 
 namespace asnet {
 
     bool streamComp(Stream *as, Stream *bs) {
         // pay attention getExpiredTimeAsMicroscends may same
-        if (as->getExpiredTimeAsMicroscends() == bs->getExpiredTimeAsMicroscends()) {
+        if (as->getExpireTime() == bs->getExpireTime()) {
             return as - bs;
         }
-        return as->getExpiredTimeAsMicroscends() - bs->getExpiredTimeAsMicroscends();
+        return as->getExpireTime() - bs->getExpireTime();
     }
 
     // not thread safe
@@ -141,49 +142,60 @@ namespace asnet {
         setState(State::CONNECTING);
     }
 
-    void Stream::setLastactivityAsCurrent() {
-        
-        last_activity_ = getCurrentTimeAsMicroscends();
-    }
-
-    long long Stream::getCurrentTimeAsMicroscends() {
+    uint64_t Stream::getCurrentTimeAsMilliscends() {
         struct timeval current_time;
         int err = gettimeofday(&current_time, nullptr);
         if (err < 0) {
+            LOG_ERROR << "get current time failed: " << strerror(errno) << "\n";
             return -1;
         }
-        long long time_as_mirosenconds = current_time.tv_sec * 1000 + current_time.tv_usec / 1000;
+        double time_as_mirosenconds = current_time.tv_sec * 1000 + current_time.tv_usec / 1000;
         return time_as_mirosenconds;
     }
 
-    int Stream::getExpiredTimeAsMicroscends() {
-        if (getTimeout() == 0 && getTiktok() == 0) {
-            return std::numeric_limits<int>::max();
-        }
-        if (getTimeout() != 0 && getTiktok() != 0) {
-            long long mostRecentExpiredTime = std::min(getTimeout(), getTiktok());
-            return mostRecentExpiredTime - (getCurrentTimeAsMicroscends() - getLastActivity());
-        }
-        else if (getTimeout()) {
-            return getTimeout() - (getCurrentTimeAsMicroscends() - getLastActivity());
-        }
-        else if (getTiktok()) {
-            return getTiktok() - (getCurrentTimeAsMicroscends() - getLastActivity());
-        }
-    }
+
+    
     // note: timeout and tiktok unit is second.
     void Stream::runAfter(int timeout, Callback callback) {
-        setLastactivityAsCurrent();
-        setTimeout(timeout * 1000);
+        // if(last_activity_ == 0) {
+        //     setLastactivityAsCurrent();
+        // }
+        // setTimeout(timeout * 1000);
+        // // static_assert(loop_ != nullptr);
+        // loop_->adjustStream(this);
+        // addCallback(Event::TIMEOUT, callback);
+        timeout_ = timeout * 1000;
         addCallback(Event::TIMEOUT, callback);
+        last_timeout_ = getCurrentTimeAsMilliscends();
     }
 
-    void Stream::runEvery(int tiktok, Callback callback) {
-        setLastactivityAsCurrent();
-        setTiktok(tiktok * 1000);
-        addCallback(Event::TICTOK, callback);
+    void Stream::runEvery(int ticktock, Callback callback) {
+
+        ticktock_ = ticktock * 1000;
+        addCallback(Event::TICKTOCK, callback);
+        last_ticktock_ = getCurrentTimeAsMilliscends();
+        
     }
 
+    uint64_t Stream::getTimeoutExpireTime() {
+        uint64_t expire = last_timeout_ + timeout_;
+        if (expire == 0) {
+            return std::numeric_limits<long long>::max();
+        }
+        return expire;
+    }
+
+    uint64_t Stream::getTicktockExpireTime() {
+        uint64_t expire = last_ticktock_ + timeout_;
+        if (expire == 0) {
+            return std::numeric_limits<long long>::max();
+        }
+        return expire;
+    }
+
+    uint64_t Stream::getExpireTime() {
+        return std::min(getTimeoutExpireTime(), getTicktockExpireTime());
+    }
     void Stream::close() {
         LOG_INFO << "waiting to close\n";
         setState(State::CLOSING);

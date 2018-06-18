@@ -16,7 +16,8 @@ namespace asnet {
 
 enum LOG_LEVEL{
     INFO,
-    ERROR
+    ERROR,
+    WARN
     // DEBUG,
     // FATAL
 };
@@ -59,6 +60,7 @@ private:
 };
 #define LOG_INFO asnet::Log(asnet::LOG_LEVEL::INFO)
 #define LOG_ERROR asnet::Log(asnet::LOG_LEVEL::ERROR)
+#define LOG_WARN asnet::Log(asnet::LOG_LEVEL::WARN)
 
 // #define LOG_FATAL Log(FATAL)
 // #define LOG_DEBUG Log(DEBUG)

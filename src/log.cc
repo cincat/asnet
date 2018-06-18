@@ -22,6 +22,7 @@ Log::Log(LOG_LEVEL level) {
     switch(level) {
         case INFO : strcat(buffer, "][INFO]"); break;
         case ERROR : strcat(buffer, "][ERROR]"); break;
+        case WARN : strcat(buffer, "][WARN]"); break;
         // case FATAL : strcat(buffer, "][FATAL]"); break;
     }
     item_.append(buffer);

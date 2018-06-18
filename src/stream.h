@@ -22,7 +22,7 @@ enum Event{
     CLOSE,
     CONNECT,
     TIMEOUT,
-    TICTOK
+    TICKTOCK
 };
 
 enum State{
@@ -38,6 +38,7 @@ class EventLoop;
 class Stream {
 public:
     using Callback = std::function<void (Stream *)>;
+    using TimerCallback = std::function<void ()>;
     const static int INVALID_SOCKET_FD = -1;
 
     // Stream(): state_(State::CLOSED),
@@ -82,14 +83,12 @@ public:
     Callback getCallbackFor(Event ev) {return callbacks_[ev];}
     void runAfter(int timeout, Callback callback);
     void runEvery(int tiktok, Callback callback);
-    void setTimeout(int timeout) {timeout_ = timeout;}
-    int getTimeout() {return timeout_;}
-    void setTiktok(int tiktok) {tiktok_ = tiktok;}
-    int getTiktok() {return tiktok_;}
-    void setLastactivityAsCurrent();
-    long long getLastActivity() {return last_activity_;}
-    long long getCurrentTimeAsMicroscends();
-    int getExpiredTimeAsMicroscends();
+    static uint64_t getCurrentTimeAsMilliscends();
+    uint64_t getTimeoutExpireTime();
+    uint64_t getTicktockExpireTime();
+    uint64_t getExpireTime();
+    bool isExpired() {return getExpireTime() < getCurrentTimeAsMilliscends();}
+    // int getAbsoluteExpiredTimeAsMilliscends();
     void setEventLoop(EventLoop *loop) {loop_ = loop;}
     EventLoop *getEventLoop() {return loop_;}
     // void setMemoryPool(MemoryPool *pool) {pool_ = pool};
@@ -103,6 +102,12 @@ public:
 
     void setContex(void *p) {contex_ = p;}
     void *getContex() {return contex_;}
+
+    void resetTimeout() {timeout_ = 0; last_timeout_ = 0;}
+    void resetTickTock() {last_ticktock_ += ticktock_;}
+
+    // bool isExpired() {return getAbsoluteExpiredTimeAsMilliscends() < getCurrentTimeAsMilliscends();}
+    // int getLastDuration() {return get}
 private:
 
     const static int kBufferLength = 1024;
@@ -110,9 +115,11 @@ private:
     std::vector<Callback> callbacks_;
     int fd_;
     State state_;
-    // time unit is mcro second which is compatible with epoll
-    long long last_activity_;
-    int timeout_, tiktok_;
+    // time unit is millisecond which is compatible with epoll
+    // uint64_t last_activity_;
+    // uint64_t expire_time_;
+    int timeout_, ticktock_;
+    uint64_t last_timeout_, last_ticktock_;
     // char write_buffer_[kBufferLength];
     // char read_buffer_[kBufferLength];
     // int write_index_;

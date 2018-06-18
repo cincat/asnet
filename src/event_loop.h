@@ -36,6 +36,7 @@ public:
     Stream *newStream();
     Stream *newStream(int fd);
     Stream *newInternalStream();
+    void adjustStream(Stream *);
     void setService(Service *service) {service_ = service;}
     void setRepeat() {repeat_ = true;}
     void appendCallback(std::pair<Stream::Callback, Stream *>);
@@ -43,7 +44,7 @@ private:
 
     void createEvent();
     void invokeCallbacks();
-    long long getBlockTime();
+    int getBlockTime();
     void registerStreamEvents();
     void handleStreamEvents(long);
     void handleClosedEvents();
