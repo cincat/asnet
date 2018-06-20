@@ -73,6 +73,7 @@ private:
 int main(int argc, char *args[]) {
     if (argc != 2) {
         std::cout << "usage: flow_server [file_path]" << std::endl;
+        return 0;
     }
 
     FlowServer server(args[1]);

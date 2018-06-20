@@ -67,7 +67,8 @@ namespace asnet {
     void Stream::addCallback(Event ev, Callback callback) {
         // fix me: log error information
         if (callbacks_[ev] != nullptr) {
-            return ;
+            // return ;
+            LOG_INFO << "replace old callback\n";
         }
         callbacks_[ev] = callback;
     }
@@ -167,6 +168,7 @@ namespace asnet {
         timeout_ = timeout * 1000;
         addCallback(Event::TIMEOUT, callback);
         last_timeout_ = getCurrentTimeAsMilliscends();
+        loop_->adjustStream(this);
     }
 
     void Stream::runEvery(int ticktock, Callback callback) {
@@ -174,7 +176,7 @@ namespace asnet {
         ticktock_ = ticktock * 1000;
         addCallback(Event::TICKTOCK, callback);
         last_ticktock_ = getCurrentTimeAsMilliscends();
-        
+        loop_->adjustStream(this);
     }
 
     uint64_t Stream::getTimeoutExpireTime() {
@@ -186,7 +188,7 @@ namespace asnet {
     }
 
     uint64_t Stream::getTicktockExpireTime() {
-        uint64_t expire = last_ticktock_ + timeout_;
+        uint64_t expire = last_ticktock_ + ticktock_;
         if (expire == 0) {
             return std::numeric_limits<long long>::max();
         }
@@ -199,5 +201,15 @@ namespace asnet {
     void Stream::close() {
         LOG_INFO << "waiting to close\n";
         setState(State::CLOSING);
+        if (hasCallbackFor(Event::TIMEOUT)) {
+            timeout_ = 0;
+            last_timeout_ = 0;
+            callbacks_[Event::TIMEOUT] = nullptr;
+        }
+        if (hasCallbackFor(Event::TICKTOCK)) {
+            ticktock_ = 0;
+            last_ticktock_ = 0;
+            callbacks_[Event::TICKTOCK] = nullptr;
+        }
     }
 }// end of namespace asnet

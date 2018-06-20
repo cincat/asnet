@@ -60,7 +60,7 @@ namespace asnet {
             registerStreamEvents();
             // long block_time = stream->getExpiredTimeAsMicroscends();
             int blocktime = getBlockTime();
-            LOG_INFO << "blocktime is " << blocktime << "\n";
+            // LOG_INFO << "blocktime is " << blocktime << "\n";
             handleStreamEvents(blocktime);
 
             handleClosedEvents();
@@ -97,7 +97,7 @@ namespace asnet {
                 event.data.ptr = stream;
                 err = epoll_ctl(efd_, EPOLL_CTL_ADD, stream->getFd(), &event);
                 if (err < 0) {
-                    LOG_ERROR << strerror(errno) << "\n";
+                    LOG_ERROR << "register stream events on " << stream->getFd() << " error: " << strerror(errno) << "\n";
                 }
             }
             else if (stream->getState() == State::LISTENING) {
@@ -106,7 +106,7 @@ namespace asnet {
                 event.data.ptr = stream;
                 err = epoll_ctl(efd_, EPOLL_CTL_ADD, stream->getFd(), &event);
                 if (err < 0) {
-                    LOG_ERROR << strerror(errno) << "\n";
+                    LOG_ERROR << "register stream events on " << stream->getFd() << " error: " << strerror(errno) << "\n";
                 }
             }
             else if (stream->getState() == State::CONNECTED) {
@@ -116,7 +116,7 @@ namespace asnet {
                 event.data.ptr = stream;
                 err = epoll_ctl(efd_, EPOLL_CTL_ADD, stream->getFd(), &event);
                 if (err < 0) {
-                    LOG_ERROR << strerror(errno) << "\n";
+                    LOG_ERROR << "register stream events on " << stream->getFd() << " error: " << strerror(errno) << "\n";
                 }
             }
             else if (stream->getState() == State::CLOSING) {
@@ -126,7 +126,7 @@ namespace asnet {
                     event.data.ptr = stream;
                     err = epoll_ctl(efd_, EPOLL_CTL_ADD, stream->getFd(), &event);
                     if (err < 0) {
-                        LOG_ERROR << strerror(errno) << "\n";
+                        LOG_ERROR << "register stream events on " << stream->getFd() << " error: " << strerror(errno) << "\n";
                     }
                 }
                 else {
@@ -205,6 +205,7 @@ namespace asnet {
                             loop->appendCallback(std::pair<Stream::Callback, Stream *>(listener, ano_stream));
                         }
                     }
+                    createEvent();
                     // stream_buffer_.push_back(ano_stream);
         
                 }
@@ -261,7 +262,7 @@ namespace asnet {
                     // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
                     // streams_.erase(stream);
                     // stream_buffer_.push_back(stream);
-                    unregistStream(stream);
+                    // unregistStream(stream);
                 }
                 else if (stream->getState() == State::CONNECTED) {
                     if (stream->writable()) {
@@ -286,38 +287,64 @@ namespace asnet {
                     }
                 }
             }
+            unregistStream(stream);
+            // stream_buffer_.push_back(stream);
+            // streams_.erase(stream);
         }
     }
 
-    // fix me : should reset lastactivity member
+    Stream *EventLoop::handleSingleTimeoutEvent(Stream *stream) {
+        // std::vector<Stream *> buffer;
+        if (stream->isExpired() == false) return nullptr;
+            // std::cout << "here" << std::endl;
+        uint64_t cur_time = Stream::getCurrentTimeAsMilliscends();
+        if (stream->getTimeoutExpireTime() <= cur_time) {
+            if (stream->hasCallbackFor(Event::TIMEOUT) == false) {
+                LOG_ERROR << "lack of timeout callback \n";
+                return nullptr ;
+            }
+            // std::cout << "get timeout" << std::endl;
+            stream->getCallbackFor(Event::TIMEOUT)(stream);
+            stream->resetTimeout();
+            // buffer.push_back(stream);
+            return stream;
+        }
+
+        if (stream->getTicktockExpireTime() <= cur_time) {
+            if (stream->hasCallbackFor(Event::TICKTOCK) == false) {
+                LOG_ERROR << "lack of ticktock callback \n";
+                return nullptr ;
+            }
+            stream->getCallbackFor(Event::TICKTOCK)(stream);
+            stream->resetTickTock();
+            // buffer.push_back(stream);
+            return stream;
+        }
+    }   
+
+    
     void EventLoop::handleTimeoutEvents() {
         std::vector<Stream *> buffer;
         for (auto stream : streams_) {
-
-            if (stream->isExpired() == false) break;
-
-            uint64_t cur_time = Stream::getCurrentTimeAsMilliscends();
-            if (stream->getTimeoutExpireTime() < cur_time) {
-                if (stream->hasCallbackFor(Event::TIMEOUT) == false) {
-                    LOG_ERROR << "lack of timeout callback \n";
-                }
-                stream->getCallbackFor(Event::TIMEOUT)(stream);
-                stream->resetTimeout();
-                buffer.push_back(stream);
+            // std::cout << "streams_ has content" << std::endl;
+            Stream *s = handleSingleTimeoutEvent(stream);
+            if (s != nullptr) {
+                buffer.push_back(s);
             }
+        }
+        for (auto stream : buffer) {
+            adjustStream(stream);
+        }
 
-            if (stream->getTicktockExpireTime() < cur_time) {
-                if (stream->hasCallbackFor(Event::TICKTOCK) == false) {
-                    LOG_ERROR << "lack of ticktock callback \n";
-                }
-                stream->getCallbackFor(Event::TICKTOCK)(stream);
-                stream->resetTickTock();
-                buffer.push_back(stream);
-            }
+        buffer.clear();
+        while (stream_buffer_.size()) {
+            buffer.push_back(stream_buffer_.front());
+            handleSingleTimeoutEvent(stream_buffer_.front());
+            stream_buffer_.pop_front();
         }
 
         for (auto stream : buffer) {
-            adjustStream(stream);
+            stream_buffer_.push_back(stream);
         }
     }
     void EventLoop::handleClosedEvents() {
@@ -334,6 +361,7 @@ namespace asnet {
             LOG_INFO << "handling closed events\n";
             streams_.erase(stream);
             epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
+            // std::cout << stream << std::endl;
             delete stream;
             stream = nullptr;
         }

@@ -58,7 +58,7 @@ LogStream::LogStream() :
         // log_thread_ = pthread_create()
         int err = ::pthread_create(&log_thread_, nullptr, threadFunc, this);
         fd_ = ::open((std::string("log_") + __progname + ".txt").data(), 
-            O_CREAT | O_RDWR,
+            O_CREAT | O_TRUNC | O_RDWR,
             S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         // fd_ = STDERR_FILENO;
 }

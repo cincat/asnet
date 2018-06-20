@@ -1,3 +1,4 @@
 add_subdirectory(echo)
 add_subdirectory(FileTransfer)
 add_subdirectory(FlowService)
+add_subdirectory(PingPong)

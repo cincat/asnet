@@ -110,7 +110,7 @@ public:
     // int getLastDuration() {return get}
 private:
 
-    const static int kBufferLength = 1024;
+    // const static int kBufferLength = 1024;
     const static int kEventNum = 8;
     std::vector<Callback> callbacks_;
     int fd_;

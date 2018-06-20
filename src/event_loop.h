@@ -49,6 +49,7 @@ private:
     void handleStreamEvents(long);
     void handleClosedEvents();
     void handleTimeoutEvents();
+    Stream *handleSingleTimeoutEvent(Stream *);
     void unregistStream(Stream *);
 
     std::set<Stream*, std::function<bool(Stream*, Stream*)>> streams_;

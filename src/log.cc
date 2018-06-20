@@ -25,7 +25,11 @@ Log::Log(LOG_LEVEL level) {
         case WARN : strcat(buffer, "][WARN]"); break;
         // case FATAL : strcat(buffer, "][FATAL]"); break;
     }
+    // strcat(buffer, __FILE__);
+    // strcat(buffer, " ");
     item_.append(buffer);
+    // item_.append("[").append(__FILE__).append("]");
+    // item_.append("[").append(std::to_string(__LINE__)).append("]");
     // switch(level) {
     //     case INFO: ::strcpy(prefix, "[INFO]: "); break;
     //     case ERROR: ::strcpy(prefix, "[ERROR]: "); break;

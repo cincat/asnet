@@ -25,11 +25,11 @@ void onData(asnet::Stream *s) {
     }
     while (s->readable()) {
         int n = s->read(buffer_, N);
-        if (n == 0) {
-            ::close(fd_);
-            s->close();
-            return ;
-        }
+        // if (n == 0) {
+        //     ::close(fd_);
+        //     s->close();
+        //     return ;
+        // }
         write(fd_, buffer_, n);
         flow_ += n;
     }
