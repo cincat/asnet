@@ -38,7 +38,7 @@ void onPerSecond(asnet::Stream *s) {
     flow_ = 0;
 }
 
-PingPongServer() : buffer_{0}, service_(1), flow_(0), total_(0){
+PingPongServer() : buffer_{0}, service_(2), flow_(0), total_(0){
     server_ = service_.newStream();
     server_->listen(2018);
     server_->addCallback(asnet::Event::DATA, std::bind(&PingPongServer::onData, this, std::placeholders::_1));

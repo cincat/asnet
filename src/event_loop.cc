@@ -205,7 +205,8 @@ namespace asnet {
                             loop->appendCallback(std::pair<Stream::Callback, Stream *>(listener, ano_stream));
                         }
                     }
-                    createEvent();
+                    // createEvent();
+                    ano_stream->getEventLoop()->createEvent();
                     // stream_buffer_.push_back(ano_stream);
         
                 }
