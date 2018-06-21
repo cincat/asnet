@@ -24,7 +24,7 @@ namespace asnet {
             block.unused = n;
             block.length = n;
             block.refund = block.length;
-            LOG_INFO << "MemoryPool has allocated a new " << n << " bytes block\n";
+            // LOG_INFO << "MemoryPool has allocated a new " << n << " bytes block\n";
             return ;
         }
         else {
@@ -39,7 +39,7 @@ namespace asnet {
                 block.unused = unit_;
                 block.length = unit_;
                 block.refund = unit_;
-                LOG_INFO << "MemoryPool has allocated a new 64k block\n";
+                LOG_INFO << "MemoryPool has allocated a new "<< unit_ << " block\n";
             }
             else {
                 auto block = free_list_.front();
@@ -49,7 +49,7 @@ namespace asnet {
                 block.refund = unit_;
                 work_list_.push_back(block);
                
-                LOG_INFO << "MemoryPool has transfer a new block from free section\n";
+                // LOG_INFO << "MemoryPool has transfer a new block from free section\n";
             }
         }
         
@@ -71,7 +71,7 @@ namespace asnet {
             block.ptr += n;
             block.unused -= n;
             record_[block.head] = std::make_pair(&block, n);
-            LOG_INFO << "MemoryPool has allocated " << n << " bytes on a new block\n";
+            // LOG_INFO << "MemoryPool has allocated " << n << " bytes on a new block\n";
             return block.head;
         }
         else {
@@ -80,7 +80,7 @@ namespace asnet {
             block.ptr += n;
             block.unused -= n;
             record_[pre_ptr] = std::make_pair(&block, n);
-            LOG_INFO << "MemoryPool has allocated " << n << " bytes on an existed block\n";
+            // LOG_INFO << "MemoryPool has allocated " << n << " bytes on an existed block\n";
             return pre_ptr;
         }
     }
@@ -93,7 +93,7 @@ namespace asnet {
 
         MemoryBlock *block = record_[ptr].first;
         block->refund -= record_[ptr].second;
-        LOG_INFO << "MemoryPool has " << record_[ptr].second << " bytes returned\n";
+        // LOG_INFO << "MemoryPool has " << record_[ptr].second << " bytes returned\n";
         if (block->refund == 0) {
             for (auto it = work_list_.begin(); it != work_list_.end(); it++) {
                 if (block == &(*it)) {
@@ -118,11 +118,11 @@ namespace asnet {
 
     MemoryPool::~MemoryPool() {
         for (auto block : work_list_) {
-            LOG_INFO << "returning heap memory\n";
+            // LOG_INFO << "returning heap memory\n";
             delete[] block.head;
         }
         for (auto block : free_list_) {
-            LOG_INFO << "returning heap memory\n";
+            // LOG_INFO << "returning heap memory\n";
             delete[] block.head;
         }
     }

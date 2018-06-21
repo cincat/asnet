@@ -61,9 +61,10 @@ namespace asnet {
             // long block_time = stream->getExpiredTimeAsMicroscends();
             int blocktime = getBlockTime();
             // LOG_INFO << "blocktime is " << blocktime << "\n";
+            
             handleStreamEvents(blocktime);
 
-            handleClosedEvents();
+            // handleClosedEvents();            
             if (streams_.size() + stream_buffer_.size() == 0) {
                 if (repeat_ == false) break;
             }
@@ -71,6 +72,8 @@ namespace asnet {
             handleTimeoutEvents();
 
             invokeCallbacks();
+
+            handleClosedEvents();
         }    
     }
 
@@ -211,7 +214,7 @@ namespace asnet {
         
                 }
                 else if (stream->getState() == State::CONNECTED) {
-                    LOG_INFO << "data have reached\n";
+                    // LOG_INFO << "data have reached\n";
                     stream->read();
                     if (stream->readable() == false) {
                         stream->close();
@@ -369,6 +372,7 @@ namespace asnet {
     }
 
     void EventLoop::createEvent() {
+        MutexLock lock(mutex_);
         uint64_t n = 1;
         int err = ::write(event_fd_, &n, sizeof(uint64_t));
         if (err < 0) {

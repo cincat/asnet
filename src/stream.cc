@@ -211,5 +211,6 @@ namespace asnet {
             last_ticktock_ = 0;
             callbacks_[Event::TICKTOCK] = nullptr;
         }
+        loop_->createEvent();
     }
 }// end of namespace asnet

@@ -30,7 +30,7 @@ public:
 
     char *allocate(int);
     void deallocate(char *);
-    static const int kBLOCKSIZE = 64*1024;
+    static const int kBLOCKSIZE = 4 * 1024 *1024;
 
 private:
 

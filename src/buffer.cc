@@ -57,7 +57,7 @@ namespace asnet {
     }
 
     void Buffer::readFrom(int fd) {
-        const int N = 1024;
+        const int N = 32 * 1024;
         ensureCapacity(N);
         int n = ::read(fd, buffer_ + tail_, N);
         tail_ += n;

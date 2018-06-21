@@ -40,9 +40,10 @@ public:
     void setService(Service *service) {service_ = service;}
     void setRepeat() {repeat_ = true;}
     void appendCallback(std::pair<Stream::Callback, Stream *>);
+    void createEvent();
 private:
 
-    void createEvent();
+    
     void invokeCallbacks();
     int getBlockTime();
     void registerStreamEvents();
