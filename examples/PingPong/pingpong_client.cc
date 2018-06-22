@@ -31,11 +31,11 @@ void printTime(asnet::Stream *s) {
 }
 void onData(asnet::Stream *s) {
     if (s->hasCallbackFor(asnet::Event::TIMEOUT) == false) {
-        s->runAfter(10, std::bind(&PingPongClient::handleClose, this, std::placeholders::_1));
+        s->runAfter(5, std::bind(&PingPongClient::handleClose, this, std::placeholders::_1));
     }
 
     if (s->hasCallbackFor(asnet::Event::TICKTOCK) == false) {
-        // s->runEvery(2, std::bind(&PingPongClient::printTime, this, std::placeholders::_1));
+        s->runEvery(2, std::bind(&PingPongClient::printTime, this, std::placeholders::_1));
     }
     asnet::Buffer *buffer = s->getInBuffer();
     total += buffer->size();
@@ -44,12 +44,12 @@ void onData(asnet::Stream *s) {
     // total += n;
     // s->write(buffer_, n);
 }
-PingPongClient() : service_(1), buffer_{0}{
-    client_ = service_.newStream();
+PingPongClient(asnet::Service *s) : service_(s), buffer_{0}{
+    client_ = service_->newStream();
     client_->connect("127.0.0.1", 2018);
     client_->addCallback(asnet::Event::CONNECT, std::bind(&PingPongClient::onConnection, this, std::placeholders::_1));
     client_->addCallback(asnet::Event::DATA, std::bind(&PingPongClient::onData, this, std::placeholders::_1));
-    service_.start();
+    service_->start();
 }
 
 void handleClose(asnet::Stream *s) {
@@ -59,7 +59,7 @@ void handleClose(asnet::Stream *s) {
 // uint64_t getReadn() {return readn_;}
 private:
     static const int N = 16 * 1024 + 1;
-    asnet::Service service_;
+    asnet::Service *service_;
     asnet::Stream *client_;
     char buffer_[N];
     uint64_t readn_;
@@ -69,13 +69,13 @@ int main() {
     // for (int i = 0; i < 100; i++) {
     //     PingPongClient client;
     // }
-    int n = 1;
-    
+    int n = 10;
+    asnet::Service service(1);
     struct timeval bval, eval;
     gettimeofday(&bval, nullptr);
     // struct tm *tmval = localtime(&bval.tv_sec);
     for (int i = 0; i < n; i++) {
-        PingPongClient client;
+        PingPongClient client(&service);
     }
     gettimeofday(&eval, nullptr);
 
