@@ -65,15 +65,15 @@ namespace asnet {
             handleStreamEvents(blocktime);
 
             // handleClosedEvents();            
-            if (streams_.size() + stream_buffer_.size() == 0) {
-                if (repeat_ == false) break;
-            }
-            
+              
             handleTimeoutEvents();
 
             invokeCallbacks();
 
             handleClosedEvents();
+            if (streams_.size() + stream_buffer_.size() == 0) {
+                if (repeat_ == false) break;
+            }
         }    
     }
 
@@ -197,10 +197,7 @@ namespace asnet {
                     if (stream->hasCallbackFor(Event::ACCEPT)) {
                         LOG_INFO << "stream has register a accept listener" << "\n";
                         Stream::Callback listener = stream->getCallbackFor(Event::ACCEPT);
-                        // ano_stream->addCallback(Event::ACCEPT, stream->getCallbackFor(Event::ACCEPT));
-                        // Connection conn(stream, ano_stream);
-                        // ano_stream->getEventLoop()->appendCallback(std::make_pair(listener, conn));
-                        // listener(conn);
+                 
                         EventLoop *loop = ano_stream->getEventLoop();
                         if (loop != nullptr) {
                             LOG_INFO << "get a loop pointer the stream belongs\n";
@@ -226,15 +223,7 @@ namespace asnet {
                     if (stream->hasCallbackFor(Event::DATA)) {
                         Stream::Callback callback = stream->getCallbackFor(Event::DATA);
                         callback(stream);
-                        // Connection conn(stream, nullptr);
-                        // int n = callback(conn);
-                        // if (n == 0) {
-                        //     stream->close();
-                        //     unregistStream(stream);
-                        //     // streams_.erase(stream);
-                        //     // stream_buffer_.push_back(stream);
-                        //     // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
-                        // }
+                
                     }
                     else {
                         LOG_ERROR << "lack data call back while data reached\n";
@@ -254,19 +243,9 @@ namespace asnet {
                         // Connection conn(stream, nullptr);
                         // callback(conn);
                         callback(stream);
-                        // if (stream->writable() == false) {
-                        //     // write complete!
-                        //     if (stream->hasCallbackFor(Event::WRITE_COMPLETE)) {
-                        //         Stream::Callback callback = stream->getCallbackFor(Event::WRITE_COMPLETE);
-                        //         callback(stream);
-                        //     }
-                        // }
+        
                     }
-                    //
-                    // epoll_ctl(efd_, EPOLL_CTL_DEL, stream->getFd(), nullptr);
-                    // streams_.erase(stream);
-                    // stream_buffer_.push_back(stream);
-                    // unregistStream(stream);
+                
                 }
                 else if (stream->getState() == State::CONNECTED) {
                     if (stream->writable()) {
@@ -369,6 +348,19 @@ namespace asnet {
             delete stream;
             stream = nullptr;
         }
+        buffer.clear();
+        while (stream_buffer_.size()) {
+            Stream *stream = stream_buffer_.front();
+            stream_buffer_.pop_front();
+            if (stream->getState() == State::CLOSED
+                || (stream->getState() == State::CLOSING && stream->writable() == false)) {
+                    delete stream;
+                    stream = nullptr;
+                    continue ;
+            }
+            buffer.push_back(stream);
+        }
+        for (auto stream : buffer) {stream_buffer_.push_back(stream);}
     }
 
     void EventLoop::createEvent() {

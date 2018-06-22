@@ -37,12 +37,12 @@ void onData(asnet::Stream *s) {
     if (s->hasCallbackFor(asnet::Event::TICKTOCK) == false) {
         // s->runEvery(2, std::bind(&PingPongClient::printTime, this, std::placeholders::_1));
     }
-    int n = s->read(buffer_, N);
-    // readn_ += n;
-    // std::cout << n << std::endl;
-    total += n;
-    // std::cout << buffer_ << std::endl;
-    s->write(buffer_, n);
+    asnet::Buffer *buffer = s->getInBuffer();
+    total += buffer->size();
+    s->write(buffer);
+    // int n = s->read(buffer_, N);
+    // total += n;
+    // s->write(buffer_, n);
 }
 PingPongClient() : service_(1), buffer_{0}{
     client_ = service_.newStream();

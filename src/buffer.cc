@@ -53,6 +53,9 @@ namespace asnet {
                 pool_->deallocate(buffer_);
                 buffer_ = nullptr;
             }
+            else {
+                writeTo(fd);
+            }
         }
     }
 

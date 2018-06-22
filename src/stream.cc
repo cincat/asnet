@@ -26,34 +26,16 @@ namespace asnet {
 
     // not thread safe
     void Stream::write() {
-        // int n = 0;
-        // MutexLock lock(mutex_);
-        // n = ::write(fd_, write_buffer_, write_index_);
-        // if (n < 0) {
-        //     return n;
-        // }
-        // LOG_INFO << "successfully write " << n << " bytes on fd " << fd_ << "\n";
-        // if (n == write_index_) {
-        //     write_index_ = 0;
-        //     memset(write_buffer_, 0, n);
-        //     return n;
-        // }
-        // memmove(write_buffer_, write_buffer_ + n, write_index_ - n);
-        // return 0;
         out_buffer_.writeTo(fd_);
     }
 
     // not thread safe, must do in same thread
     void Stream::write(char *ptr, int len) {
-        // MutexLock lock(mutex_);
-        // if (len + write_index_ >= kBufferLength) {
-        //     return -1;
-        // }
-
-        // ::strncpy(write_buffer_ + write_index_, ptr, len);
-        // write_index_ += len;
-        // return len;
         out_buffer_.append(ptr, len);
+    }
+
+    void Stream::write(Buffer *buffer) {
+        buffer->writeTo(fd_);
     }
 
     void Stream::read() {
@@ -158,13 +140,6 @@ namespace asnet {
     
     // note: timeout and tiktok unit is second.
     void Stream::runAfter(int timeout, Callback callback) {
-        // if(last_activity_ == 0) {
-        //     setLastactivityAsCurrent();
-        // }
-        // setTimeout(timeout * 1000);
-        // // static_assert(loop_ != nullptr);
-        // loop_->adjustStream(this);
-        // addCallback(Event::TIMEOUT, callback);
         timeout_ = timeout * 1000;
         addCallback(Event::TIMEOUT, callback);
         last_timeout_ = getCurrentTimeAsMilliscends();

@@ -98,7 +98,7 @@ namespace asnet {
             for (auto it = work_list_.begin(); it != work_list_.end(); it++) {
                 if (block == &(*it)) {
                     if (block->length == unit_) {
-                        LOG_INFO << "transfer a block to free section\n";
+                        // LOG_INFO << "transfer a block to free section\n";
                         free_list_.push_back(*it);
                         work_list_.erase(it);
 

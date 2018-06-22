@@ -94,6 +94,7 @@ public:
     // void setMemoryPool(MemoryPool *pool) {pool_ = pool};
     void write();
     void write(char*, int);
+    void write(Buffer *);
     bool writable() {return out_buffer_.hasContent();}
     int read(char *, int);
     void read();
@@ -106,8 +107,8 @@ public:
     void resetTimeout() {timeout_ = 0; last_timeout_ = 0;}
     void resetTickTock() {last_ticktock_ += ticktock_;}
 
-    // bool isExpired() {return getAbsoluteExpiredTimeAsMilliscends() < getCurrentTimeAsMilliscends();}
-    // int getLastDuration() {return get}
+    Buffer *getInBuffer() {return &in_buffer_;}
+    Buffer *getOutBuffer() {return &out_buffer_;}
 private:
 
     // const static int kBufferLength = 1024;
