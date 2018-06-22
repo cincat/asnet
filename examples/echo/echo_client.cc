@@ -1,34 +1,43 @@
 #include <stream.h>
-// #include <event_loop.h>
 #include <service.h>
 #include <log.h>
 
 #include <unistd.h>
 #include <string.h>
 
-using namespace asnet;
+class EchoClient {
+public:
+    void onConnect(asnet::Stream *s) {
+        char *message = "hello, asnet!";
+        s->write(message, strlen(message));
+    }
+    void onData(asnet::Stream *s) {
+        while (s->readable()) {
+            int n = s->read(buffer_, N - 1);
+            buffer_[n] = 0;
+            std::cout << buffer_ << std::endl;
+        }
+    }
+    void start() {
+        service_.start();
+    }
 
-void onData(asnet::Stream *s) {
-    char buffer[16] = {'\0'};
-    int n = s->read(buffer, 16);
-    // int n = ::read(s->getFd(), buffer, 16);
-    // if (n == 0) {
-    //     conn.getLocal()->close();
-    //     return 0;
-    // }
-    LOG_INFO << "has successfully read " << n << " bytes \n";
-    ::write(STDOUT_FILENO, buffer, n);
-    s->close();
-    // conn.getLocal()->close();
-    return ;
-}
+    EchoClient() : service_(1), buffer_{0} {
+        client_ = service_.newStream();
+        client_->connect("127.0.0.1", 2018);
+        client_->addCallback(asnet::Event::CONNECT, std::bind(&EchoClient::onConnect, this, std::placeholders::_1));
+        client_->addCallback(asnet::Event::DATA, std::bind(&EchoClient::onData, this, std::placeholders::_1));
+    }
+private:
+    static const int N = 32;
+    asnet::Service service_;
+    asnet::Stream *client_;
+    char buffer_[N];
+};
+
 
 int main() {
-    // asnet::EventLoop loop;
-    asnet::Service service(1);
-    asnet::Stream *client = service.newStream();
-    client->connect("127.0.0.1", 10086);
-    client->addCallback(Event::DATA, std::bind(onData, std::placeholders::_1));
-    service.start();
+    EchoClient client;
+    client.start();
     return 0;
 }

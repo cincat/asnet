@@ -6,21 +6,34 @@
 #include <string.h>
 #include <unistd.h>
 
-// using namespace asnet;
-void onAccept(asnet::Stream *s) {
-    char buffer[16] = "hello, world\n";
-    s->write(buffer, ::strlen(buffer));
-    // conn.getRemote()->write("", 0);
-    s->close();
-    return ;
-}
+class EchoServer {
+public:
+    EchoServer() :
+        service_(1),
+        buffer_{0} {
+            server_ = service_.newStream();
+            server_->listen(2018);
+            server_->addCallback(asnet::Event::DATA, std::bind(&EchoServer::onData, this, std::placeholders::_1));
+        }
+    void start() {
+        service_.start();
+    }
+    void onData(asnet::Stream *s) {
+        while (s->readable()) {
+            int n = s->read(buffer_, N);
+            s->write(buffer_, n);
+        }
+        s->close();
+    }
+private:
+    const static int N = 32;
+    asnet::Service service_;
+    asnet::Stream *server_;
+    char buffer_[N];
+};
 
 int main() {
-    // asnet::LOG_INFO << "step into main function\n";
-    asnet::Service service(2);
-    asnet::Stream *server = service.newStream();
-    server->listen(10086);
-    server->addCallback(asnet::Event::ACCEPT, std::bind(onAccept, std::placeholders::_1));
-    service.start();
+    EchoServer server;
+    server.start();
     return 0;
 }
